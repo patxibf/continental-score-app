@@ -166,6 +166,35 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send(updatedRound)
     },
   )
+
+  fastify.delete(
+    '/api/rounds/:id',
+    { preHandler: [fastify.requireGroup] },
+    async (request, reply) => {
+      const { groupId } = request.user as { groupId: string; groupAccess: string }
+      const { id } = request.params as { id: string }
+
+      const round = await prisma.round.findFirst({
+        where: { id, game: { season: { groupId } } },
+        include: {
+          game: {
+            include: {
+              rounds: { orderBy: { roundNumber: 'desc' }, take: 1 },
+            },
+          },
+        },
+      })
+
+      if (!round) return reply.status(404).send({ error: 'Round not found' })
+      if (round.game.status === 'CLOSED') return reply.status(403).send({ error: 'Game is closed' })
+      if (round.game.rounds[0].id !== id) {
+        return reply.status(400).send({ error: 'Can only undo the last round' })
+      }
+
+      await prisma.round.delete({ where: { id } })
+      return reply.status(204).send()
+    },
+  )
 }
 
 export default roundRoutes

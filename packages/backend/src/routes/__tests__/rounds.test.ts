@@ -242,3 +242,73 @@ describe('PATCH /api/rounds/:id', () => {
     expect(res.statusCode).toBe(400)
   })
 })
+
+describe('DELETE /api/rounds/:id', () => {
+  it('deletes the last round of an IN_PROGRESS game', async () => {
+    vi.mocked(prisma.round.findFirst).mockResolvedValueOnce({
+      id: 'r2',
+      game: {
+        status: 'IN_PROGRESS',
+        rounds: [{ id: 'r2', roundNumber: 2 }],
+      },
+    } as any)
+    vi.mocked(prisma.round.delete).mockResolvedValueOnce({} as any)
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/rounds/r2',
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(204)
+  })
+
+  it('returns 400 when trying to delete a non-last round', async () => {
+    vi.mocked(prisma.round.findFirst).mockResolvedValueOnce({
+      id: 'r1',
+      game: {
+        status: 'IN_PROGRESS',
+        rounds: [{ id: 'r2', roundNumber: 2 }],
+      },
+    } as any)
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/rounds/r1',
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(400)
+    expect(res.json()).toMatchObject({ error: 'Can only undo the last round' })
+  })
+
+  it('returns 403 when game is CLOSED', async () => {
+    vi.mocked(prisma.round.findFirst).mockResolvedValueOnce({
+      id: 'r1',
+      game: {
+        status: 'CLOSED',
+        rounds: [{ id: 'r1', roundNumber: 7 }],
+      },
+    } as any)
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/rounds/r1',
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('returns 404 when round not found', async () => {
+    vi.mocked(prisma.round.findFirst).mockResolvedValueOnce(null)
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/rounds/not-exist',
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(404)
+  })
+})
