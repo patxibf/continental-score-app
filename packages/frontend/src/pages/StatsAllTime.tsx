@@ -32,7 +32,7 @@ export default function StatsAllTime() {
         </Link>
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Statistics</p>
-          <h1 className="text-3xl font-bold text-[var(--cobalt-dark)]">All-Time</h1>
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">All-Time</h1>
         </div>
       </div>
 

@@ -107,7 +107,7 @@ export default function Players() {
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Your group</p>
-          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
             Players
           </h1>
         </div>

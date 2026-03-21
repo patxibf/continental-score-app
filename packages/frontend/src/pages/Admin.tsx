@@ -159,7 +159,7 @@ export default function Admin() {
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Administration</p>
-          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
             Groups
           </h1>
         </div>

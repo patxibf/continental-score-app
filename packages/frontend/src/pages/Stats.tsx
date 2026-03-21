@@ -61,6 +61,7 @@ export default function Stats() {
   if (isLoading) {
     return (
       <div className="space-y-6 fade-up">
+        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
         <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           Statistics
         </h1>
@@ -76,6 +77,7 @@ export default function Stats() {
   if (!leaderboard || leaderboard.length === 0) {
     return (
       <div className="space-y-6 fade-up">
+        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
         <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           Statistics
         </h1>
@@ -103,6 +105,7 @@ export default function Stats() {
   return (
     <div className="space-y-8 fade-up">
       <div>
+        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
         <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           Statistics
         </h1>

@@ -309,7 +309,7 @@ export default function GamePage() {
             <span>Game</span>
           </nav>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">In progress</p>
-          <h1 className="text-3xl font-bold text-[var(--cobalt)]">
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
             Game
           </h1>
         </div>
