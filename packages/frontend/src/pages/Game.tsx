@@ -205,6 +205,7 @@ export default function GamePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
+  const [abortDialogOpen, setAbortDialogOpen] = useState(false)
   const [editingRoundId, setEditingRoundId] = useState<string | null>(null)
 
   const { data: game, isLoading } = useQuery<GameType>({
@@ -230,6 +231,15 @@ export default function GamePage() {
       queryClient.invalidateQueries({ queryKey: ['game', id] })
       setEditingRoundId(null)
       toast({ title: 'Round updated!' })
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  })
+
+  const abortMutation = useMutation({
+    mutationFn: () => api.delete(`/games/${id}`),
+    onSuccess: () => {
+      toast({ title: 'Game aborted' })
+      navigate(`/seasons/${game?.seasonId}`)
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   })
@@ -273,9 +283,14 @@ export default function GamePage() {
           </h1>
         </div>
         {game.status === 'IN_PROGRESS' && (
-          <Button variant="outline" size="sm" onClick={() => setCloseDialogOpen(true)} className="text-xs">
-            Close Game
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setAbortDialogOpen(true)} className="text-xs text-destructive border-destructive/40 hover:bg-destructive/10">
+              Abort
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setCloseDialogOpen(true)} className="text-xs">
+              Close Game
+            </Button>
+          </div>
         )}
       </div>
 
@@ -375,6 +390,29 @@ export default function GamePage() {
           </div>
         </div>
       )}
+
+      <Dialog open={abortDialogOpen} onOpenChange={setAbortDialogOpen}>
+        <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
+          <DialogHeader>
+            <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
+              Abort Game
+            </DialogTitle>
+            <DialogDescription>
+              This will permanently delete the game and all its rounds. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAbortDialogOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => abortMutation.mutate()}
+              disabled={abortMutation.isPending}
+            >
+              {abortMutation.isPending ? 'Aborting…' : 'Abort Game'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
         <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">

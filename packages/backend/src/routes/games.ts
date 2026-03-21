@@ -157,6 +157,29 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send(updated)
     },
   )
+  fastify.delete(
+    '/api/games/:id',
+    { preHandler: [fastify.requireGroup] },
+    async (request, reply) => {
+      const { groupId } = request.user as { groupId: string }
+      const { id } = request.params as { id: string }
+
+      const game = await prisma.game.findFirst({
+        where: { id, season: { groupId } },
+      })
+
+      if (!game) {
+        return reply.status(404).send({ error: 'Game not found' })
+      }
+      if (game.status === 'CLOSED') {
+        return reply.status(403).send({ error: 'Cannot abort a closed game' })
+      }
+
+      await prisma.game.delete({ where: { id } })
+
+      return reply.status(204).send()
+    },
+  )
 }
 
 export default gameRoutes

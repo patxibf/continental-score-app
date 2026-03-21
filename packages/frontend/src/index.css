@@ -43,11 +43,6 @@
     @apply border-border;
   }
 
-  /* Prevent iOS Safari from auto-zooming on input focus (triggers when font-size < 16px) */
-  input, textarea, select {
-    font-size: 16px;
-  }
-
   html {
     font-family: 'DM Sans', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -160,6 +155,18 @@
   .stagger > *:nth-child(6) { animation-delay: 300ms; }
   .stagger > *:nth-child(7) { animation-delay: 360ms; }
   .stagger > *:nth-child(8) { animation-delay: 420ms; }
+}
+
+/*
+ * Prevent iOS (Safari + Chrome) from auto-zooming on input focus.
+ * iOS zooms when an input's computed font-size is < 16px.
+ * This rule lives outside all @layer blocks so it wins over Tailwind
+ * utility classes (text-sm = 14px) which would otherwise override it.
+ */
+input:not([type="range"]),
+textarea,
+select {
+  font-size: 16px !important;
 }
 
 /* Recharts overrides */
