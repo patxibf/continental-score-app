@@ -68,9 +68,9 @@ function GroupDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
+      <DialogContent className="bg-white border-[var(--border-color)]">
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
+          <DialogTitle style={{ fontSize: '1.5rem' }}>
             {group ? 'Edit Group' : 'New Group'}
           </DialogTitle>
         </DialogHeader>
@@ -84,7 +84,7 @@ function GroupDialog({
               value={name}
               onChange={e => setName(e.target.value)}
               required
-              className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
+              className="bg-[hsl(var(--secondary))] border-[var(--border-color)] focus:border-[var(--cobalt)] focus:ring-0"
             />
             {!group && name && (
               <p className="text-xs text-muted-foreground">Login handle: @{slugPreview || '…'}</p>
@@ -103,7 +103,7 @@ function GroupDialog({
               value={password}
               onChange={e => setPassword(e.target.value)}
               required={!group}
-              className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
+              className="bg-[hsl(var(--secondary))] border-[var(--border-color)] focus:border-[var(--cobalt)] focus:ring-0"
             />
           </div>
           {/* Member Password */}
@@ -117,7 +117,7 @@ function GroupDialog({
               value={memberPassword}
               onChange={e => setMemberPassword(e.target.value)}
               placeholder="Optional — share with players for view-only access"
-              className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
+              className="bg-[hsl(var(--secondary))] border-[var(--border-color)] focus:border-[var(--cobalt)] focus:ring-0"
             />
             <p className="text-xs text-muted-foreground">
               Members can view scores and submit rounds, but cannot manage seasons, games, or players.
@@ -159,7 +159,7 @@ export default function Admin() {
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Administration</p>
-          <h1 className="text-4xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
             Groups
           </h1>
         </div>
@@ -171,7 +171,7 @@ export default function Admin() {
 
       {isLoading && (
         <div className="space-y-2">
-          {[1, 2].map(i => <div key={i} className="h-16 rounded-xl bg-[rgba(201,168,76,0.04)] animate-pulse" />)}
+          {[1, 2].map(i => <div key={i} className="h-16 rounded-xl bg-accent animate-pulse" />)}
         </div>
       )}
 
@@ -179,14 +179,14 @@ export default function Admin() {
         {groups?.map(group => (
           <div key={group.id} className="felt-card px-4 py-3.5 flex items-center justify-between fade-up">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-[rgba(201,168,76,0.1)] flex items-center justify-center text-sm border border-[rgba(201,168,76,0.15)]">
+              <div className="w-8 h-8 rounded-full bg-[rgba(37,99,235,0.1)] flex items-center justify-center text-sm border border-[rgba(37,99,235,0.15)]">
                 🃏
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-sm">{group.name}</p>
                   {group.hasMemberPassword && (
-                    <span className="text-xs text-muted-foreground border border-[rgba(201,168,76,0.2)] rounded px-1.5 py-0.5 leading-none">
+                    <span className="text-xs text-muted-foreground border border-[var(--border-color)] rounded px-1.5 py-0.5 leading-none">
                       Members enabled
                     </span>
                   )}
@@ -198,7 +198,7 @@ export default function Admin() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-[var(--gold)]"
+                className="h-8 w-8 text-muted-foreground hover:text-[var(--cobalt)]"
                 onClick={() => { setEditingGroup(group); setDialogOpen(true) }}
               >
                 <Pencil className="h-3.5 w-3.5" />

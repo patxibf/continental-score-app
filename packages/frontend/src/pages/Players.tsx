@@ -39,9 +39,9 @@ function PlayerDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
+      <DialogContent className="bg-white border-[var(--border-color)]">
         <DialogHeader>
-          <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
+          <DialogTitle style={{ fontSize: '1.5rem' }}>
             {player ? 'Edit Player' : 'New Player'}
           </DialogTitle>
         </DialogHeader>
@@ -54,7 +54,7 @@ function PlayerDialog({
               onChange={e => setName(e.target.value)}
               placeholder="Player name"
               required
-              className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
+              className="bg-[hsl(var(--secondary))] border-[var(--border-color)] focus:border-[var(--cobalt)] focus:ring-0"
             />
           </div>
           <div className="space-y-2">
@@ -67,8 +67,8 @@ function PlayerDialog({
                   onClick={() => setAvatar(a)}
                   className={`text-2xl p-2.5 rounded-xl transition-all duration-150 ${
                     avatar === a
-                      ? 'bg-[rgba(201,168,76,0.15)] border border-[rgba(201,168,76,0.5)] scale-110'
-                      : 'bg-[rgba(255,255,255,0.03)] border border-transparent hover:border-[rgba(201,168,76,0.2)]'
+                      ? 'bg-[rgba(37,99,235,0.15)] border border-[rgba(37,99,235,0.5)] scale-110'
+                      : 'bg-transparent border border-transparent hover:border-[var(--border-color)]'
                   }`}
                   title={a}
                 >
@@ -107,7 +107,7 @@ export default function Players() {
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Your group</p>
-          <h1 className="text-4xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
             Players
           </h1>
         </div>
@@ -121,7 +121,7 @@ export default function Players() {
 
       {isLoading && (
         <div className="space-y-2">
-          {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-xl bg-[rgba(201,168,76,0.04)] animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-xl bg-accent animate-pulse" />)}
         </div>
       )}
 
@@ -129,7 +129,7 @@ export default function Players() {
         {players?.map(player => (
           <div key={player.id} className="felt-card px-4 py-3 flex items-center justify-between fade-up">
             <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-full bg-[rgba(201,168,76,0.08)] flex items-center justify-center text-xl border border-[rgba(201,168,76,0.12)]">
+              <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-xl border border-border">
                 {AVATAR_EMOJIS[player.avatar] || '🎮'}
               </div>
               <div>
@@ -144,7 +144,7 @@ export default function Players() {
                 variant="ghost"
                 size="icon"
                 onClick={() => openEdit(player)}
-                className="text-muted-foreground hover:text-[var(--gold)] h-8 w-8"
+                className="text-muted-foreground hover:text-[var(--cobalt)] h-8 w-8"
               >
                 <Pencil className="h-3.5 w-3.5" />
               </Button>

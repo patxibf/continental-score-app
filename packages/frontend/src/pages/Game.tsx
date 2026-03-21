@@ -16,7 +16,7 @@ function LiveScoreboard({ game, totals }: { game: GameType; totals: Record<strin
 
   return (
     <div className="felt-card overflow-hidden">
-      <div className="px-4 py-3 border-b border-[rgba(201,168,76,0.08)]">
+      <div className="px-4 py-3 border-b border-[rgba(37,99,235,0.08)]">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">Scoreboard</p>
       </div>
       {sorted.map((gp, idx) => {
@@ -25,13 +25,13 @@ function LiveScoreboard({ game, totals }: { game: GameType; totals: Record<strin
         const pct = maxScore > 0 ? (total / maxScore) * 100 : 0
 
         return (
-          <div key={gp.playerId} className="flex items-center gap-3 px-4 py-2.5 border-b border-[rgba(201,168,76,0.06)] last:border-0">
+          <div key={gp.playerId} className="flex items-center gap-3 px-4 py-2.5 border-b border-[rgba(37,99,235,0.06)] last:border-0">
             <span className="text-xs text-muted-foreground w-4 text-center font-mono">{idx + 1}</span>
             <span className="text-xl">{AVATAR_EMOJIS[gp.player.avatar] || '🎮'}</span>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 mb-1">
                 <span className="text-sm font-medium truncate">{gp.player.name}</span>
-                {isLeading && <span className="text-[10px] text-[var(--gold)]">★</span>}
+                {isLeading && <span className="text-[10px] text-[var(--cobalt)]">★</span>}
               </div>
               <div className="score-bar">
                 <div className="score-bar-fill" style={{ width: `${pct}%` }} />
@@ -39,7 +39,7 @@ function LiveScoreboard({ game, totals }: { game: GameType; totals: Record<strin
             </div>
             <span
               className="font-mono text-lg font-semibold flex-shrink-0"
-              style={{ color: isLeading ? 'var(--gold-bright)' : 'var(--gold)', fontFamily: 'Cormorant Garamond, serif' }}
+              style={{ color: isLeading ? 'var(--cobalt-dark)' : 'var(--cobalt)' }}
             >
               {total}
             </span>
@@ -121,12 +121,12 @@ export function ScoreEntry({
 
   return (
     <div className="felt-card overflow-hidden">
-      <div className="px-4 py-3 border-b border-[rgba(201,168,76,0.08)] flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-[rgba(37,99,235,0.08)] flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-[var(--gold)]">Round {roundNumber}</p>
+          <p className="text-sm font-semibold text-[var(--cobalt)]">Round {roundNumber}</p>
           <p className="text-xs text-muted-foreground">{roundInfo?.description} · {roundInfo?.cardsDealt} cards</p>
         </div>
-        <span className="text-xs px-2 py-0.5 rounded-full border border-[rgba(201,168,76,0.3)] text-[var(--gold)] bg-[rgba(201,168,76,0.06)]">
+        <span className="text-xs px-2 py-0.5 rounded-full border border-[rgba(37,99,235,0.3)] text-[var(--cobalt)] bg-[rgba(37,99,235,0.06)]">
           {initialData ? 'Editing' : 'Enter scores'}
         </span>
       </div>
@@ -148,12 +148,12 @@ export function ScoreEntry({
                   isOneGo
                     ? 'border-[rgba(100,200,100,0.5)] bg-[rgba(100,200,100,0.08)]'
                     : isOut
-                    ? 'border-[rgba(201,168,76,0.5)] bg-[rgba(201,168,76,0.08)]'
-                    : 'border-[rgba(201,168,76,0.08)] bg-[rgba(255,255,255,0.02)] hover:border-[rgba(201,168,76,0.2)]'
+                    ? 'border-[rgba(37,99,235,0.5)] bg-[rgba(37,99,235,0.08)]'
+                    : 'border-[rgba(37,99,235,0.08)] bg-transparent hover:border-[rgba(37,99,235,0.2)]'
                 }`}
               >
                 <span className="text-xl">{AVATAR_EMOJIS[gp.player.avatar] || '🎮'}</span>
-                <span className={`text-sm font-medium transition-colors ${isOneGo ? 'text-green-400' : isOut ? 'text-[var(--gold)]' : ''}`}>
+                <span className={`text-sm font-medium transition-colors ${isOneGo ? 'text-green-400' : isOut ? 'text-[var(--cobalt)]' : ''}`}>
                   {gp.player.name}
                 </span>
                 {isOneGo && (
@@ -161,14 +161,14 @@ export function ScoreEntry({
                     ONE GO ⚡ {-(roundNumber * 10)}
                   </span>
                 )}
-                {isOut && !isOneGo && <span className="ml-auto text-xs text-[var(--gold)] font-semibold">OUT 🏆</span>}
+                {isOut && !isOneGo && <span className="ml-auto text-xs text-[var(--cobalt)] font-semibold">OUT 🏆</span>}
               </button>
               {!isSelected ? (
                 <Input
                   type="number"
                   min="0"
                   inputMode="numeric"
-                  className="w-20 text-center font-mono bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0 h-12"
+                  className="w-20 text-center font-mono bg-[hsl(var(--secondary))] border-[var(--border-color)] focus:border-[var(--cobalt)] focus:ring-0 h-12"
                   style={{ fontSize: '16px' }}
                   value={scores[gp.playerId]}
                   onChange={e => setScores(prev => ({ ...prev, [gp.playerId]: e.target.value }))}
@@ -178,7 +178,7 @@ export function ScoreEntry({
                 <div className={`w-20 h-12 flex items-center justify-center rounded-xl font-mono font-bold border ${
                   isOneGo
                     ? 'bg-[rgba(100,200,100,0.1)] text-green-400 border-[rgba(100,200,100,0.3)]'
-                    : 'bg-[rgba(201,168,76,0.1)] text-[var(--gold)] border-[rgba(201,168,76,0.3)]'
+                    : 'bg-[rgba(37,99,235,0.1)] text-[var(--cobalt)] border-[rgba(37,99,235,0.3)]'
                 }`}>
                   {isOneGo ? -(roundNumber * 10) : 0}
                 </div>
@@ -272,7 +272,7 @@ export default function GamePage() {
           <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
             <button
               onClick={() => navigate(`/seasons/${game.seasonId}`)}
-              className="hover:text-[var(--gold)] transition-colors"
+              className="hover:text-[var(--cobalt)] transition-colors"
             >
               Season
             </button>
@@ -280,7 +280,7 @@ export default function GamePage() {
             <span>Game</span>
           </nav>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">In progress</p>
-          <h1 className="text-3xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h1 className="text-3xl font-bold text-[var(--cobalt)]">
             Game
           </h1>
         </div>
@@ -304,10 +304,10 @@ export default function GamePage() {
             className="flex-1 h-1.5 rounded-full transition-all duration-500"
             style={{
               background: r.roundNumber <= completedRounds
-                ? 'linear-gradient(to right, var(--gold-dim), var(--gold))'
+                ? 'linear-gradient(to right, var(--cobalt-mid), var(--cobalt))'
                 : r.roundNumber === nextRound
-                ? 'rgba(201,168,76,0.25)'
-                : 'rgba(201,168,76,0.08)',
+                ? 'rgba(37,99,235,0.25)'
+                : 'rgba(37,99,235,0.08)',
             }}
           />
         ))}
@@ -329,8 +329,8 @@ export default function GamePage() {
       )}
 
       {isGameComplete && game.status === 'IN_PROGRESS' && isGroupAdmin && (
-        <div className="felt-card p-6 text-center border-[rgba(201,168,76,0.3)] gold-glow">
-          <p className="text-2xl mb-1" style={{ fontFamily: 'Cormorant Garamond, serif', color: 'var(--gold)' }}>
+        <div className="felt-card p-6 text-center border-[rgba(37,99,235,0.3)] gold-glow">
+          <p className="text-2xl mb-1" style={{ color: 'var(--cobalt)' }}>
             All 7 rounds complete!
           </p>
           <p className="text-sm text-muted-foreground mb-4">Ready to close the game?</p>
@@ -359,13 +359,13 @@ export default function GamePage() {
               ) : (
                 <div key={round.id} className="felt-card p-4 fade-up">
                   <div className="flex items-center justify-between mb-3">
-                    <span className="text-sm font-semibold text-[var(--gold)]">Round {round.roundNumber}</span>
+                    <span className="text-sm font-semibold text-[var(--cobalt)]">Round {round.roundNumber}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{ROUNDS_INFO[round.roundNumber - 1]?.description}</span>
                       {game.status === 'IN_PROGRESS' && isGroupAdmin && (
                         <button
                           onClick={() => setEditingRoundId(round.id)}
-                          className="text-xs text-muted-foreground hover:text-[var(--gold)] transition-colors px-1.5 py-0.5 rounded border border-transparent hover:border-[rgba(201,168,76,0.3)]"
+                          className="text-xs text-muted-foreground hover:text-[var(--cobalt)] transition-colors px-1.5 py-0.5 rounded border border-transparent hover:border-[rgba(37,99,235,0.3)]"
                           title="Edit round"
                         >
                           ✏️
@@ -378,7 +378,7 @@ export default function GamePage() {
                       <div key={score.playerId} className="flex items-center gap-2 text-sm">
                         <span>{AVATAR_EMOJIS[score.player.avatar] || '🎮'}</span>
                         <span className="text-xs text-muted-foreground truncate flex-1">{score.player.name}</span>
-                        <span className="font-mono text-xs text-[var(--gold)] flex-shrink-0">
+                        <span className="font-mono text-xs text-[var(--cobalt)] flex-shrink-0">
                           {score.wentOut
                             ? score.points < 0 ? `${score.points} ⚡` : '0 🏆'
                             : score.points}
@@ -394,9 +394,9 @@ export default function GamePage() {
       )}
 
       <Dialog open={abortDialogOpen} onOpenChange={setAbortDialogOpen}>
-        <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
+        <DialogContent className="bg-white border-[var(--border-color)]">
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
+            <DialogTitle style={{ fontSize: '1.5rem' }}>
               Abort Game
             </DialogTitle>
             <DialogDescription>
@@ -417,9 +417,9 @@ export default function GamePage() {
       </Dialog>
 
       <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
-        <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
+        <DialogContent className="bg-white border-[var(--border-color)]">
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
+            <DialogTitle style={{ fontSize: '1.5rem' }}>
               Close Game
             </DialogTitle>
             <DialogDescription>This action is irreversible. Final standings:</DialogDescription>
@@ -432,7 +432,7 @@ export default function GamePage() {
                   <span className="text-sm w-5">{idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}</span>
                   <span className="text-xl">{AVATAR_EMOJIS[gp.player.avatar] || '🎮'}</span>
                   <span className="flex-1 text-sm">{gp.player.name}</span>
-                  <span className="font-mono text-sm text-[var(--gold)]">{totals[gp.playerId] || 0} pts</span>
+                  <span className="font-mono text-sm text-[var(--cobalt)]">{totals[gp.playerId] || 0} pts</span>
                 </div>
               ))}
           </div>
