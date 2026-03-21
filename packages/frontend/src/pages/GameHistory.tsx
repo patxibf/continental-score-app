@@ -3,6 +3,40 @@ import { useQuery } from '@tanstack/react-query'
 import { api, Game as GameType } from '@/lib/api'
 import { ROUNDS_INFO, AVATAR_EMOJIS } from '@/lib/utils'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer } from 'recharts'
+import { Button } from '@/components/ui/button'
+import { toast } from '@/hooks/useToast'
+
+export function buildShareText(
+  game: GameType,
+  totals: Record<string, number>,
+  gameIndex: number,
+): string {
+  const ranked = [...game.players]
+    .map(gp => ({ ...gp, total: totals[gp.playerId] ?? 0 }))
+    .sort((a, b) => a.total - b.total)
+
+  const wentOutPlayers = new Set(
+    (game.rounds ?? []).flatMap(r =>
+      r.scores.filter(s => s.wentOut).map(s => s.playerId)
+    )
+  )
+
+  const lines = ranked.map((p, i) => {
+    const prefix = i === 0 ? '🏆' : `${i + 1}.`
+    const suffix = wentOutPlayers.has(p.playerId) ? ' ⚡' : ''
+    return `${prefix} ${p.player.name} · ${p.total} pts${suffix}`
+  })
+
+  const seasonName = game.season?.name ?? 'Season'
+
+  return [
+    `🃏 Continental — ${seasonName}, Game #${gameIndex}`,
+    '',
+    ...lines,
+    '',
+    `Played ${game.rounds?.length ?? 0} rounds · via Continental app`,
+  ].join('\n')
+}
 
 export default function GameHistory() {
   const { id } = useParams<{ id: string }>()
@@ -10,6 +44,12 @@ export default function GameHistory() {
   const { data: game, isLoading } = useQuery<GameType>({
     queryKey: ['game', id],
     queryFn: () => api.get<GameType>(`/games/${id}`),
+  })
+
+  const { data: seasonGames } = useQuery<GameType[]>({
+    queryKey: ['games', game?.seasonId],
+    queryFn: () => api.get<GameType[]>(`/seasons/${game!.seasonId}/games`),
+    enabled: !!game,
   })
 
   if (isLoading) return <p className="text-muted-foreground">Loading…</p>
@@ -32,16 +72,43 @@ export default function GameHistory() {
 
   const playerNames = game.players.map(gp => gp.player.name)
 
+  const gameIndex = seasonGames
+    ? [...seasonGames]
+        .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+        .findIndex(g => g.id === id) + 1
+    : 0
+
+  async function handleShare() {
+    if (!game) return
+    const text = buildShareText(game, totals, gameIndex)
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ text })
+      } catch {
+        // User cancelled — do nothing
+      }
+    } else {
+      await navigator.clipboard.writeText(text)
+      toast({ title: 'Result copied to clipboard!' })
+    }
+  }
+
   return (
     <div className="space-y-6 fade-up">
-      <div>
-        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Final Results</p>
-        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
-          Game Over
-        </h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          {new Date(game.createdAt).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Final Results</p>
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+            Game Over
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            {new Date(game.createdAt).toLocaleDateString('en', { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={handleShare}>
+          Share result
+        </Button>
       </div>
 
       {/* Winner spotlight */}
