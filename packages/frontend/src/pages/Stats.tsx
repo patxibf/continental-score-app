@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { api, Standing } from '@/lib/api'
 import { AVATAR_EMOJIS } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   RadialBarChart, RadialBar, Cell,
@@ -105,7 +106,12 @@ export default function Stats() {
         <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           Statistics
         </h1>
-        <p className="text-muted-foreground text-sm mt-1 tracking-wide">All-time standings</p>
+        <div className="flex items-center justify-between mt-1">
+          <p className="text-muted-foreground text-sm tracking-wide">All-time standings</p>
+          <Link to="/stats/alltime">
+            <Button variant="outline" size="sm" className="text-xs">All-Time →</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Leaderboard */}

@@ -11,6 +11,7 @@ import NewGame from '@/pages/NewGame'
 import Game from '@/pages/Game'
 import GameHistory from '@/pages/GameHistory'
 import Stats from '@/pages/Stats'
+import StatsAllTime from '@/pages/StatsAllTime'
 import PlayerStats from '@/pages/PlayerStats'
 import Admin from '@/pages/Admin'
 
@@ -112,6 +113,16 @@ export default function App() {
           <ProtectedRoute>
             <Layout>
               <Stats />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stats/alltime"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <StatsAllTime />
             </Layout>
           </ProtectedRoute>
         }

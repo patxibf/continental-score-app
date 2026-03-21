@@ -2,6 +2,7 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { api, Game as GameType } from '@/lib/api'
 import { ROUNDS_INFO, AVATAR_EMOJIS } from '@/lib/utils'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, ResponsiveContainer } from 'recharts'
 
 export default function GameHistory() {
   const { id } = useParams<{ id: string }>()
@@ -18,6 +19,18 @@ export default function GameHistory() {
   const sorted = [...game.players].sort((a, b) => (totals[a.playerId] || 0) - (totals[b.playerId] || 0))
   const winner = sorted[0]
   const maxPts = Math.max(...Object.values(totals))
+
+  const PLAYER_COLORS = ['#2563eb', '#1e3a8a', '#3b5cc4', '#6b8ce8', '#93aaed', '#b8c9f5']
+
+  const chartData = game.rounds?.map(round => {
+    const entry: Record<string, number | string> = { round: `R${round.roundNumber}` }
+    for (const score of round.scores) {
+      entry[score.player.name] = score.wentOut && score.points <= 0 ? 0 : score.points
+    }
+    return entry
+  }) ?? []
+
+  const playerNames = game.players.map(gp => gp.player.name)
 
   return (
     <div className="space-y-6 fade-up">
@@ -102,6 +115,32 @@ export default function GameHistory() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Round breakdown chart */}
+      {chartData.length > 0 && playerNames.length > 0 && (
+        <div className="felt-card p-5">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">
+            Points per Round
+          </p>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="round" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+              <Tooltip />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              {playerNames.map((name, i) => (
+                <Bar
+                  key={name}
+                  dataKey={name}
+                  fill={PLAYER_COLORS[i % PLAYER_COLORS.length]}
+                  radius={[3, 3, 0, 0]}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
         </div>
       )}
     </div>

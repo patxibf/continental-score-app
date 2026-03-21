@@ -68,6 +68,7 @@ export interface Season {
 export interface Game {
   id: string
   seasonId: string
+  season?: { id: string; name: string }
   status: 'IN_PROGRESS' | 'CLOSED'
   createdAt: string
   closedAt?: string | null
@@ -120,4 +121,23 @@ export interface Group {
   username: string
   createdAt: string
   hasMemberPassword?: boolean
+}
+
+export interface AllTimePlayer {
+  playerId: string
+  name: string
+  avatar: string | null
+  gamesPlayed: number
+  wins: number
+  totalScore: number
+  currentStreak: number
+  streakType: 'win' | 'loss' | null
+  badges: string[]
+}
+
+export interface H2HResult {
+  gamesPlayed: number
+  winsA: number
+  winsB: number
+  ties: number
 }

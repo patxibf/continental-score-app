@@ -1,6 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { api } from '@/lib/api'
+import { useQuery, useQueries } from '@tanstack/react-query'
+import { api, H2HResult, AllTimePlayer } from '@/lib/api'
 import { AVATAR_EMOJIS } from '@/lib/utils'
 import {
   XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -61,6 +61,21 @@ export default function PlayerStats() {
   const { data: stats, isLoading } = useQuery<PlayerStatsData>({
     queryKey: ['player-stats', id],
     queryFn: () => api.get<PlayerStatsData>(`/players/${id}/stats`),
+  })
+
+  const { data: alltimePlayers } = useQuery<AllTimePlayer[]>({
+    queryKey: ['stats', 'alltime'],
+    queryFn: () => api.get<AllTimePlayer[]>('/stats/alltime'),
+  })
+
+  const opponents = alltimePlayers?.filter(p => p.playerId !== id) ?? []
+
+  const h2hQueries = useQueries({
+    queries: opponents.map(opp => ({
+      queryKey: ['stats', 'h2h', id, opp.playerId],
+      queryFn: () => api.get<H2HResult>(`/stats/h2h?playerA=${id}&playerB=${opp.playerId}`),
+      enabled: !!id && opponents.length > 0,
+    })),
   })
 
   if (isLoading) {
@@ -200,6 +215,33 @@ export default function PlayerStats() {
                 </div>
               </Link>
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Head-to-Head */}
+      {opponents.length > 0 && h2hQueries.some(q => q.data && q.data.gamesPlayed > 0) && (
+        <div>
+          <div className="suit-divider text-xs mb-4">Head-to-Head</div>
+          <div className="space-y-2">
+            {opponents.map((opp, i) => {
+              const h2h = h2hQueries[i]?.data
+              if (!h2h || h2h.gamesPlayed === 0) return null
+              return (
+                <div key={opp.playerId} className="felt-card px-4 py-3 flex items-center gap-3">
+                  <span className="text-lg">{AVATAR_EMOJIS[opp.avatar ?? ''] || '🎮'}</span>
+                  <span className="flex-1 text-sm font-medium">{opp.name}</span>
+                  <div className="flex items-center gap-2 text-sm font-mono">
+                    <span className="text-[var(--cobalt-dark)] font-semibold">{h2h.winsA}W</span>
+                    <span className="text-muted-foreground">–</span>
+                    <span className="text-muted-foreground">{h2h.winsB}L</span>
+                    {h2h.ties > 0 && (
+                      <span className="text-muted-foreground">– {h2h.ties}T</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
