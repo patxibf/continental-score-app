@@ -25,7 +25,7 @@ export class ContinentalStack extends cdk.Stack {
     // --------------------------------------------------------------- Security groups
     const ec2Sg = new ec2.SecurityGroup(this, 'Ec2Sg', {
       vpc,
-      description: 'Continental EC2 — SSH + API',
+      description: 'Continental EC2 - SSH and API',
       allowAllOutbound: true,
     })
     ec2Sg.addIngressRule(ec2.Peer.anyIpv4(), ec2.Port.tcp(22), 'SSH')
@@ -33,7 +33,7 @@ export class ContinentalStack extends cdk.Stack {
 
     const dbSg = new ec2.SecurityGroup(this, 'DbSg', {
       vpc,
-      description: 'RDS — EC2 only',
+      description: 'RDS - EC2 only',
       allowAllOutbound: false,
     })
     dbSg.addIngressRule(ec2Sg, ec2.Port.tcp(5432), 'Postgres from EC2')
@@ -58,7 +58,7 @@ export class ContinentalStack extends cdk.Stack {
       publiclyAccessible: false,
       deletionProtection: false,
       removalPolicy: cdk.RemovalPolicy.SNAPSHOT,
-      backupRetention: cdk.Duration.days(7),
+      backupRetention: cdk.Duration.days(0),
     })
 
     // ------------------------------------------------------------------ EC2 Key Pair
@@ -101,7 +101,7 @@ export class ContinentalStack extends cdk.Stack {
     const instance = new ec2.Instance(this, 'Ec2', {
       vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T2, ec2.InstanceSize.MICRO),
+      instanceType: ec2.InstanceType.of(ec2.InstanceClass.T3, ec2.InstanceSize.MICRO),
       machineImage: ec2.MachineImage.latestAmazonLinux2023(),
       securityGroup: ec2Sg,
       keyPair,
