@@ -68,13 +68,13 @@ export default function SeasonDetail() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
-          <h1 className="text-4xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
             {season.name}
           </h1>
           <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full border ${
             season.status === 'ACTIVE'
-              ? 'border-[rgba(201,168,76,0.4)] text-[var(--gold)] bg-[rgba(201,168,76,0.06)]'
-              : 'border-[rgba(255,255,255,0.1)] text-muted-foreground'
+              ? 'border-[rgba(37,99,235,0.4)] text-[var(--cobalt)] bg-[rgba(37,99,235,0.06)]'
+              : 'border-[rgba(0,0,0,0.1)] text-muted-foreground'
           }`}>
             {season.status}
           </span>
@@ -104,12 +104,12 @@ export default function SeasonDetail() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div className="suit-divider text-xs flex-1">Standings</div>
-            <div className="flex gap-1 ml-4 flex-shrink-0 bg-[rgba(201,168,76,0.06)] rounded-lg p-0.5 border border-[rgba(201,168,76,0.12)]">
+            <div className="flex gap-1 ml-4 flex-shrink-0 bg-[rgba(37,99,235,0.06)] rounded-lg p-0.5 border border-[rgba(37,99,235,0.12)]">
               <button
                 onClick={() => setStandingsSort('points')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-all duration-150 ${
                   standingsSort === 'points'
-                    ? 'bg-[var(--gold)] text-[hsl(var(--background))] font-semibold'
+                    ? 'bg-[var(--cobalt)] text-[hsl(var(--background))] font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -120,7 +120,7 @@ export default function SeasonDetail() {
                 onClick={() => setStandingsSort('wins')}
                 className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs transition-all duration-150 ${
                   standingsSort === 'wins'
-                    ? 'bg-[var(--gold)] text-[hsl(var(--background))] font-semibold'
+                    ? 'bg-[var(--cobalt)] text-[hsl(var(--background))] font-semibold'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -135,7 +135,7 @@ export default function SeasonDetail() {
                 ? (maxWins > 0 ? (s.wins / maxWins) * 100 : 0)
                 : (maxPts > 0 ? (s.totalPoints / maxPts) * 100 : 0)
               return (
-                <div key={s.playerId} className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(201,168,76,0.06)] last:border-0">
+                <div key={s.playerId} className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(37,99,235,0.06)] last:border-0">
                   <span className="text-sm font-mono text-muted-foreground w-5 text-center">
                     {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                   </span>
@@ -173,7 +173,7 @@ export default function SeasonDetail() {
               key={game.id}
               to={game.status === 'IN_PROGRESS' ? `/games/${game.id}` : `/games/${game.id}/history`}
             >
-              <div className="felt-card px-4 py-3 flex items-center justify-between hover:border-[rgba(201,168,76,0.3)] transition-all duration-200 group fade-up">
+              <div className="felt-card px-4 py-3 flex items-center justify-between hover:border-[rgba(37,99,235,0.3)] transition-all duration-200 group fade-up">
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1">
                     {game.players.slice(0, 4).map(gp => (
@@ -189,12 +189,12 @@ export default function SeasonDetail() {
                 <div className="flex items-center gap-2">
                   <span className={`text-xs px-2 py-0.5 rounded-full border ${
                     game.status === 'IN_PROGRESS'
-                      ? 'border-[rgba(201,168,76,0.4)] text-[var(--gold)] bg-[rgba(201,168,76,0.08)]'
-                      : 'border-[rgba(255,255,255,0.08)] text-muted-foreground'
+                      ? 'border-[rgba(37,99,235,0.4)] text-[var(--cobalt)] bg-[rgba(37,99,235,0.08)]'
+                      : 'border-[rgba(0,0,0,0.08)] text-muted-foreground'
                   }`}>
                     {game.status === 'IN_PROGRESS' ? '● Live' : 'Done'}
                   </span>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[var(--gold)] transition-colors" />
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[var(--cobalt)] transition-colors" />
                 </div>
               </div>
             </Link>
@@ -208,9 +208,9 @@ export default function SeasonDetail() {
       </div>
 
       <Dialog open={closeDialogOpen} onOpenChange={setCloseDialogOpen}>
-        <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
+        <DialogContent className="bg-white border-[var(--border-color)]">
           <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
+            <DialogTitle style={{ fontSize: '1.5rem' }}>
               Close Season
             </DialogTitle>
             <DialogDescription>

@@ -23,7 +23,7 @@ export default function GameHistory() {
     <div className="space-y-6 fade-up">
       <div>
         <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Final Results</p>
-        <h1 className="text-4xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           Game Over
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
@@ -33,14 +33,11 @@ export default function GameHistory() {
 
       {/* Winner spotlight */}
       {winner && (
-        <div className="relative overflow-hidden rounded-xl border border-[rgba(201,168,76,0.4)] bg-[var(--felt-card)] p-6 text-center gold-glow">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(201,168,76,0.07),transparent_70%)] pointer-events-none" />
+        <div className="relative overflow-hidden rounded-xl border border-[rgba(37,99,235,0.4)] bg-white p-6 text-center gold-glow">
+          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(37,99,235,0.07),transparent_70%)] pointer-events-none" />
           <p className="text-3xl mb-2">🏆</p>
           <span className="text-4xl">{AVATAR_EMOJIS[winner.player.avatar] || '🎮'}</span>
-          <h2
-            className="text-2xl font-bold text-[var(--gold)] mt-2"
-            style={{ fontFamily: 'Cormorant Garamond, serif' }}
-          >
+          <h2 className="text-2xl font-bold text-[var(--cobalt-dark)] mt-2">
             {winner.player.name}
           </h2>
           <p className="text-muted-foreground text-sm mt-1">
@@ -55,7 +52,7 @@ export default function GameHistory() {
           const pts = totals[gp.playerId] || 0
           const pct = maxPts > 0 ? (pts / maxPts) * 100 : 0
           return (
-            <div key={gp.playerId} className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(201,168,76,0.06)] last:border-0">
+            <div key={gp.playerId} className="flex items-center gap-3 px-4 py-3 border-b border-[rgba(37,99,235,0.06)] last:border-0">
               <span className="w-6 text-center text-sm">
                 {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : <span className="font-mono text-xs text-muted-foreground">{idx + 1}</span>}
               </span>
@@ -82,7 +79,7 @@ export default function GameHistory() {
             {game.rounds.map(round => (
               <div key={round.id} className="felt-card p-4 fade-up">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-semibold text-[var(--gold)]">
+                  <p className="text-sm font-semibold text-[var(--cobalt)]">
                     Round {round.roundNumber}
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -96,7 +93,7 @@ export default function GameHistory() {
                       <div key={score.playerId} className="flex items-center gap-2 text-sm">
                         <span>{AVATAR_EMOJIS[score.player.avatar] || '🎮'}</span>
                         <span className="text-muted-foreground text-xs truncate flex-1">{score.player.name}</span>
-                        <span className="font-mono text-xs text-[var(--gold)] flex-shrink-0">
+                        <span className="font-mono text-xs text-[var(--cobalt)] flex-shrink-0">
                           {score.wentOut ? '0 🏆' : score.points}
                         </span>
                       </div>
