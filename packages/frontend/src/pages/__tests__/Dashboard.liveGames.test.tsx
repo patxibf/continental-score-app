@@ -19,10 +19,15 @@ const activeSeason = {
   createdAt: '2026-01-01', _count: { games: 2, players: 3 },
 }
 
-function makeInProgressGame(id: string) {
+const activeSeason2 = {
+  id: 's2', name: 'Summer 2026', status: 'ACTIVE', groupId: 'g1',
+  createdAt: '2026-02-01', _count: { games: 1, players: 2 },
+}
+
+function makeInProgressGame(id: string, seasonId = 's1') {
   return {
     id,
-    seasonId: 's1',
+    seasonId,
     status: 'IN_PROGRESS',
     createdAt: '2026-01-01',
     players: [
@@ -81,5 +86,40 @@ describe('Dashboard — live games', () => {
     renderDashboard()
 
     await waitFor(() => expect(screen.getAllByText('Live Game')).toHaveLength(2))
+  })
+
+  it('shows live games from both active seasons when two seasons are active', async () => {
+    vi.mocked(api.get).mockImplementation(async (path: string) => {
+      if (path === '/auth/me') return { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup' }
+      if (path === '/seasons') return [activeSeason, activeSeason2]
+      if (path === '/seasons/s1/games') return [makeInProgressGame('game-1', 's1')]
+      if (path === '/seasons/s2/games') return [makeInProgressGame('game-2', 's2')]
+      if (path === '/seasons/s1/standings') return []
+      if (path === '/seasons/s2/standings') return []
+      return []
+    })
+
+    renderDashboard()
+
+    await waitFor(() => expect(screen.getAllByText('Live Game')).toHaveLength(2))
+  })
+
+  it('shows a season card for each active season', async () => {
+    vi.mocked(api.get).mockImplementation(async (path: string) => {
+      if (path === '/auth/me') return { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup' }
+      if (path === '/seasons') return [activeSeason, activeSeason2]
+      if (path === '/seasons/s1/games') return []
+      if (path === '/seasons/s2/games') return []
+      if (path === '/seasons/s1/standings') return []
+      if (path === '/seasons/s2/standings') return []
+      return []
+    })
+
+    renderDashboard()
+
+    await waitFor(() => {
+      expect(screen.getByText('Spring 2026')).toBeInTheDocument()
+      expect(screen.getByText('Summer 2026')).toBeInTheDocument()
+    })
   })
 })

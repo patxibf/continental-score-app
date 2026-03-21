@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, Player, Game as GameType } from '@/lib/api'
 import { AVATAR_EMOJIS } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { Check } from 'lucide-react'
 export default function NewGame() {
   const { seasonId } = useParams<{ seasonId: string }>()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
   const { data: players } = useQuery<Player[]>({
@@ -20,7 +21,10 @@ export default function NewGame() {
   const createMutation = useMutation({
     mutationFn: (playerIds: string[]) =>
       api.post<GameType>(`/seasons/${seasonId}/games`, { playerIds }),
-    onSuccess: game => { navigate(`/games/${game.id}`) },
+    onSuccess: game => {
+      queryClient.invalidateQueries({ queryKey: ['games', seasonId] })
+      navigate(`/games/${game.id}`)
+    },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   })
 

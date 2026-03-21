@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueries } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { api, Season, Game, Standing } from '@/lib/api'
@@ -14,21 +14,24 @@ export default function Dashboard() {
     queryFn: () => api.get<Season[]>('/seasons'),
   })
 
-  const activeSeason = seasons?.find(s => s.status === 'ACTIVE')
+  const activeSeasons = seasons?.filter(s => s.status === 'ACTIVE') ?? []
 
-  const { data: recentGames } = useQuery<Game[]>({
-    queryKey: ['games', activeSeason?.id],
-    queryFn: () => api.get<Game[]>(`/seasons/${activeSeason!.id}/games`),
-    enabled: !!activeSeason,
+  const gamesResults = useQueries({
+    queries: activeSeasons.map(season => ({
+      queryKey: ['games', season.id],
+      queryFn: () => api.get<Game[]>(`/seasons/${season.id}/games`),
+    })),
   })
 
-  const { data: standings } = useQuery<Standing[]>({
-    queryKey: ['standings', activeSeason?.id],
-    queryFn: () => api.get<Standing[]>(`/seasons/${activeSeason!.id}/standings`),
-    enabled: !!activeSeason,
+  const standingsResults = useQueries({
+    queries: activeSeasons.map(season => ({
+      queryKey: ['standings', season.id],
+      queryFn: () => api.get<Standing[]>(`/seasons/${season.id}/standings`),
+    })),
   })
 
-  const inProgressGames = recentGames?.filter(g => g.status === 'IN_PROGRESS') ?? []
+  const allGames = gamesResults.flatMap(r => r.data ?? [])
+  const inProgressGames = allGames.filter(g => g.status === 'IN_PROGRESS')
 
   return (
     <div className="space-y-6 fade-up">
@@ -87,67 +90,70 @@ export default function Dashboard() {
         </Link>
       ))}
 
-      {/* Active season card */}
-      {activeSeason ? (
-        <div className="felt-card p-5">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Active Season</p>
-              <h2 className="text-2xl font-bold text-foreground">
-                {activeSeason.name}
-              </h2>
+      {/* Active season cards */}
+      {activeSeasons.length > 0 ? activeSeasons.map((activeSeason, idx) => {
+        const standings = standingsResults[idx]?.data ?? []
+        return (
+          <div key={activeSeason.id} className="felt-card p-5">
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Active Season</p>
+                <h2 className="text-2xl font-bold text-foreground">
+                  {activeSeason.name}
+                </h2>
+              </div>
+              <span className="text-xs px-2 py-0.5 rounded-full border border-[rgba(37,99,235,0.3)] text-[var(--cobalt)] bg-[rgba(37,99,235,0.06)]">
+                Active
+              </span>
             </div>
-            <span className="text-xs px-2 py-0.5 rounded-full border border-[rgba(37,99,235,0.3)] text-[var(--cobalt)] bg-[rgba(37,99,235,0.06)]">
-              Active
-            </span>
-          </div>
 
-          <div className="grid grid-cols-2 gap-3 mb-4">
-            <div className="bg-[rgba(37,99,235,0.05)] rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-[var(--cobalt)]">
-                {activeSeason._count?.games || 0}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">Games</p>
-            </div>
-            <div className="bg-[rgba(37,99,235,0.05)] rounded-lg p-3 text-center">
-              <p className="text-2xl font-bold text-[var(--cobalt)]">
-                {activeSeason._count?.players || 0}
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">Players</p>
-            </div>
-          </div>
-
-          {standings && standings.length > 0 && (
-            <div className="mb-4">
-              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Top 3</p>
-              <div className="space-y-1">
-                {[...standings]
-                  .sort((a, b) => a.totalPoints - b.totalPoints)
-                  .slice(0, 3)
-                  .map((s, idx) => (
-                    <div key={s.playerId} className="flex items-center gap-2 text-sm">
-                      <span className="w-5 text-center">{['🥇','🥈','🥉'][idx]}</span>
-                      <span className="flex-1 truncate">{s.playerName}</span>
-                      <span className="font-mono text-xs text-muted-foreground">{s.totalPoints} pts</span>
-                    </div>
-                  ))}
+            <div className="grid grid-cols-2 gap-3 mb-4">
+              <div className="bg-[rgba(37,99,235,0.05)] rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-[var(--cobalt)]">
+                  {activeSeason._count?.games || 0}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Games</p>
+              </div>
+              <div className="bg-[rgba(37,99,235,0.05)] rounded-lg p-3 text-center">
+                <p className="text-2xl font-bold text-[var(--cobalt)]">
+                  {activeSeason._count?.players || 0}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">Players</p>
               </div>
             </div>
-          )}
 
-          <div className="flex gap-2">
-            <Link to={`/seasons/${activeSeason.id}`} className="flex-1">
-              <Button variant="outline" className="w-full text-xs h-9">View Season</Button>
-            </Link>
-            <Link to={`/seasons/${activeSeason.id}/games/new`} className="flex-1">
-              <Button className="w-full text-xs h-9 gap-1">
-                <Plus className="h-3.5 w-3.5" />
-                New Game
-              </Button>
-            </Link>
+            {standings.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Top 3</p>
+                <div className="space-y-1">
+                  {[...standings]
+                    .sort((a, b) => a.totalPoints - b.totalPoints)
+                    .slice(0, 3)
+                    .map((s, idx) => (
+                      <div key={s.playerId} className="flex items-center gap-2 text-sm">
+                        <span className="w-5 text-center">{['🥇','🥈','🥉'][idx]}</span>
+                        <span className="flex-1 truncate">{s.playerName}</span>
+                        <span className="font-mono text-xs text-muted-foreground">{s.totalPoints} pts</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <Link to={`/seasons/${activeSeason.id}`} className="flex-1">
+                <Button variant="outline" className="w-full text-xs h-9">View Season</Button>
+              </Link>
+              <Link to={`/seasons/${activeSeason.id}/games/new`} className="flex-1">
+                <Button className="w-full text-xs h-9 gap-1">
+                  <Plus className="h-3.5 w-3.5" />
+                  New Game
+                </Button>
+              </Link>
+            </div>
           </div>
-        </div>
-      ) : (
+        )
+      }) : (
         <div className="felt-card p-8 text-center">
           <p className="text-4xl mb-3">🎴</p>
           <p className="text-muted-foreground mb-4">No active season</p>
@@ -161,11 +167,11 @@ export default function Dashboard() {
       )}
 
       {/* Activity feed: closed games only */}
-      {recentGames && recentGames.filter(g => g.status === 'CLOSED').length > 0 && (
+      {allGames.filter(g => g.status === 'CLOSED').length > 0 && (
         <div>
           <div className="suit-divider text-xs mb-4">Activity</div>
           <div className="space-y-2 stagger">
-            {recentGames
+            {allGames
               .filter(g => g.status === 'CLOSED')
               .slice(0, 5)
               .map(game => (
