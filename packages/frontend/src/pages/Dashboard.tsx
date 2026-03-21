@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
-import { api, Season, Game } from '@/lib/api'
+import { api, Season, Game, Standing } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { AVATAR_EMOJIS } from '@/lib/utils'
 import { Plus, ChevronRight } from 'lucide-react'
@@ -19,6 +19,12 @@ export default function Dashboard() {
   const { data: recentGames } = useQuery<Game[]>({
     queryKey: ['games', activeSeason?.id],
     queryFn: () => api.get<Game[]>(`/seasons/${activeSeason!.id}/games`),
+    enabled: !!activeSeason,
+  })
+
+  const { data: standings } = useQuery<Standing[]>({
+    queryKey: ['standings', activeSeason?.id],
+    queryFn: () => api.get<Standing[]>(`/seasons/${activeSeason!.id}/standings`),
     enabled: !!activeSeason,
   })
 
@@ -111,6 +117,24 @@ export default function Dashboard() {
             </div>
           </div>
 
+          {standings && standings.length > 0 && (
+            <div className="mb-4">
+              <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Top 3</p>
+              <div className="space-y-1">
+                {[...standings]
+                  .sort((a, b) => a.totalPoints - b.totalPoints)
+                  .slice(0, 3)
+                  .map((s, idx) => (
+                    <div key={s.playerId} className="flex items-center gap-2 text-sm">
+                      <span className="w-5 text-center">{['🥇','🥈','🥉'][idx]}</span>
+                      <span className="flex-1 truncate">{s.playerName}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{s.totalPoints} pts</span>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Link to={`/seasons/${activeSeason.id}`} className="flex-1">
               <Button variant="outline" className="w-full text-xs h-9">View Season</Button>
@@ -136,42 +160,34 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Recent games */}
-      {recentGames && recentGames.length > 0 && (
+      {/* Activity feed: closed games only */}
+      {recentGames && recentGames.filter(g => g.status === 'CLOSED').length > 0 && (
         <div>
-          <div className="suit-divider text-xs mb-4">Recent Games</div>
+          <div className="suit-divider text-xs mb-4">Activity</div>
           <div className="space-y-2 stagger">
-            {recentGames.slice(0, 5).map(game => (
-              <Link
-                key={game.id}
-                to={game.status === 'IN_PROGRESS' ? `/games/${game.id}` : `/games/${game.id}/history`}
-              >
-                <div className="felt-card px-4 py-3 flex items-center justify-between hover:border-[rgba(37,99,235,0.3)] transition-all duration-200 group fade-up">
-                  <div className="flex items-center gap-3">
-                    <div className="flex gap-1">
-                      {game.players.slice(0, 4).map(gp => (
-                        <span key={gp.playerId} className="text-base">
-                          {AVATAR_EMOJIS[gp.player.avatar] || '🎮'}
-                        </span>
-                      ))}
+            {recentGames
+              .filter(g => g.status === 'CLOSED')
+              .slice(0, 5)
+              .map(game => (
+                <Link key={game.id} to={`/games/${game.id}/history`}>
+                  <div className="felt-card px-4 py-3 flex items-center justify-between hover:border-[rgba(37,99,235,0.3)] transition-all duration-200 group fade-up">
+                    <div className="flex items-center gap-3">
+                      <div className="flex gap-1">
+                        {game.players.slice(0, 4).map(gp => (
+                          <span key={gp.playerId} className="text-base">
+                            {AVATAR_EMOJIS[gp.player.avatar] || '🎮'}
+                          </span>
+                        ))}
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(game.createdAt).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
+                        {' · '}{game._count?.rounds ?? 0} rounds
+                      </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(game.createdAt).toLocaleDateString('en', { month: 'short', day: 'numeric' })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className={`text-xs px-2 py-0.5 rounded-full border ${
-                      game.status === 'IN_PROGRESS'
-                        ? 'border-[rgba(37,99,235,0.4)] text-[var(--cobalt)] bg-[rgba(37,99,235,0.08)]'
-                        : 'border-[rgba(0,0,0,0.08)] text-muted-foreground'
-                    }`}>
-                      {game.status === 'IN_PROGRESS' ? '● Live' : 'Done'}
-                    </span>
                     <ChevronRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-[var(--cobalt)] transition-colors" />
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
           </div>
         </div>
       )}
