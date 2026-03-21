@@ -315,6 +315,11 @@ export default function GamePage() {
         </div>
         {game.status === 'IN_PROGRESS' && isGroupAdmin && (
           <div className="flex items-center gap-2">
+            {game.rounds && game.rounds.length > 0 && (
+              <Button variant="outline" size="sm" onClick={() => setUndoDialogOpen(true)} className="text-xs">
+                Undo last round
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => setAbortDialogOpen(true)} className="text-xs text-destructive border-destructive/40 hover:bg-destructive/10">
               Abort
             </Button>
@@ -322,16 +327,6 @@ export default function GamePage() {
               Close Game
             </Button>
           </div>
-        )}
-        {game.status === 'IN_PROGRESS' && game.rounds && game.rounds.length > 0 && isGroupAdmin && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setUndoDialogOpen(true)}
-            className="text-xs"
-          >
-            Undo last round
-          </Button>
         )}
         {game.status === 'CLOSED' && isGroupAdmin && (
           <Button
