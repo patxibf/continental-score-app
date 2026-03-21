@@ -291,6 +291,27 @@ describe('POST /api/games/:id/close — pot settlement', () => {
     // gamePlayer.update should NOT be called
     expect(vi.mocked(prisma.gamePlayer.update)).not.toHaveBeenCalled()
   })
+
+  it('skips pot settlement and closes normally when totalPot is set but contributionAmount is null (defensive fallback)', async () => {
+    const fallbackGame = {
+      ...makePotGame(),
+      totalPot: { toString: () => '15.00' },
+      season: { contributionAmount: null },
+    }
+    vi.mocked(prisma.game.findFirst).mockResolvedValueOnce(fallbackGame as any)
+    vi.mocked(prisma.game.update).mockResolvedValueOnce({ id: 'game-1', status: 'CLOSED', closedAt: new Date() } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/games/game-1/close',
+      payload: { confirm: true },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(200)
+    // gamePlayer.update should NOT be called (contributionAmount is null)
+    expect(vi.mocked(prisma.gamePlayer.update)).not.toHaveBeenCalled()
+  })
 })
 
 describe('POST /api/seasons/:seasonId/games — totalPot', () => {
