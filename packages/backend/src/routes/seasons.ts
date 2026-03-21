@@ -125,37 +125,45 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         const hasAllRounds = game.rounds.length === TOTAL_ROUNDS
 
         if (game.totalPot != null && game.season?.contributionAmount != null && hasAllRounds) {
-          const contribution = parseFloat(game.season.contributionAmount.toString())
-          const totalPot = parseFloat(game.totalPot.toString())
-
-          const playerTotals: Record<string, number> = {}
-          for (const round of game.rounds) {
-            for (const score of round.scores) {
-              playerTotals[score.playerId] = (playerTotals[score.playerId] ?? 0) + score.points
-            }
-          }
-
-          const minScore = Math.min(...Object.values(playerTotals))
-          const winnerIds = Object.keys(playerTotals).filter(pid => playerTotals[pid] === minScore)
-          const winnerCount = winnerIds.length
-          const winnerShare = Math.floor((totalPot / winnerCount) * 100) / 100
-
-          const potUpdates = game.players.map(gp => {
-            const isWinner = winnerIds.includes(gp.playerId)
-            const potAwarded = isWinner ? winnerShare - contribution : -contribution
-            return prisma.gamePlayer.update({
-              where: { gameId_playerId: { gameId: game.id, playerId: gp.playerId } },
-              data: { potAwarded },
-            })
-          })
-
-          const closeUpdate = prisma.game.update({
-            where: { id: game.id },
-            data: { status: 'CLOSED', closedAt: new Date() },
-          })
-
           try {
-            await prisma.$transaction([...potUpdates, closeUpdate])
+            const contribution = parseFloat(game.season.contributionAmount.toString())
+            const totalPot = parseFloat(game.totalPot.toString())
+
+            const playerTotals: Record<string, number> = {}
+            for (const round of game.rounds) {
+              for (const score of round.scores) {
+                playerTotals[score.playerId] = (playerTotals[score.playerId] ?? 0) + score.points
+              }
+            }
+
+            if (Object.keys(playerTotals).length === 0) {
+              // No scores yet — close without settlement
+              await prisma.game.update({
+                where: { id: game.id },
+                data: { status: 'CLOSED', closedAt: new Date() },
+              })
+            } else {
+              const minScore = Math.min(...Object.values(playerTotals))
+              const winnerIds = Object.keys(playerTotals).filter(pid => playerTotals[pid] === minScore)
+              const winnerCount = winnerIds.length
+              const winnerShare = Math.floor((totalPot / winnerCount) * 100) / 100
+
+              const potUpdates = game.players.map(gp => {
+                const isWinner = winnerIds.includes(gp.playerId)
+                const potAwarded = isWinner ? winnerShare - contribution : -contribution
+                return prisma.gamePlayer.update({
+                  where: { gameId_playerId: { gameId: game.id, playerId: gp.playerId } },
+                  data: { potAwarded },
+                })
+              })
+
+              const closeUpdate = prisma.game.update({
+                where: { id: game.id },
+                data: { status: 'CLOSED', closedAt: new Date() },
+              })
+
+              await prisma.$transaction([...potUpdates, closeUpdate])
+            }
           } catch (e) {
             console.error(`Failed to settle pot for game ${game.id}`, e)
           }
