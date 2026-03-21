@@ -148,6 +148,11 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
       if (game.status === 'CLOSED') {
         return reply.status(400).send({ error: 'Game already closed' })
       }
+      if (game.rounds.length < TOTAL_ROUNDS) {
+        return reply.status(400).send({
+          error: `Cannot close game: all ${TOTAL_ROUNDS} rounds must be completed first`,
+        })
+      }
 
       const updated = await prisma.game.update({
         where: { id },
