@@ -124,11 +124,39 @@ export class ContinentalStack extends cdk.Stack {
     })
 
     // ------------------------------------------------------------------ CloudFront
+    // Backend origin: CloudFront proxies /api/* to EC2 so cookies work on same domain.
+    // CloudFront does not accept raw IPs; use the EC2 public DNS derived from the EIP.
+    // Pattern: ec2-<a>-<b>-<c>-<d>.compute-1.amazonaws.com (us-east-1)
+    const ec2DnsName = cdk.Fn.join('', [
+      'ec2-',
+      cdk.Fn.select(0, cdk.Fn.split('.', eip.ref)),
+      '-',
+      cdk.Fn.select(1, cdk.Fn.split('.', eip.ref)),
+      '-',
+      cdk.Fn.select(2, cdk.Fn.split('.', eip.ref)),
+      '-',
+      cdk.Fn.select(3, cdk.Fn.split('.', eip.ref)),
+      '.compute-1.amazonaws.com',
+    ])
+    const backendOrigin = new origins.HttpOrigin(ec2DnsName, {
+      httpPort: 3001,
+      protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+    })
+
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
       defaultBehavior: {
         origin: origins.S3BucketOrigin.withOriginAccessControl(siteBucket),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+      },
+      additionalBehaviors: {
+        '/api/*': {
+          origin: backendOrigin,
+          viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.HTTPS_ONLY,
+          cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+          allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        },
       },
       defaultRootObject: 'index.html',
       // SPA fallback: 403/404 → serve index.html so React Router works
