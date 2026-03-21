@@ -50,8 +50,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         if (amt > 9999.99) {
           return reply.status(400).send({ error: 'contributionAmount must not exceed 9999.99' })
         }
-        const parts = String(amt).split('.')
-        if (parts[1] && parts[1].length > 2) {
+        if (Number(amt.toFixed(2)) !== amt) {
           return reply.status(400).send({ error: 'contributionAmount must have at most 2 decimal places' })
         }
       }

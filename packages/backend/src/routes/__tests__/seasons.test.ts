@@ -126,7 +126,6 @@ describe('POST /api/seasons — member access', () => {
 
 describe('POST /api/seasons — money pot validation', () => {
   it('creates season with potEnabled and contributionAmount', async () => {
-    vi.mocked(prisma.season.findFirst).mockResolvedValue(null) // group ownership check
     vi.mocked(prisma.season.create).mockResolvedValueOnce({
       id: 's1', name: 'Spring', groupId: 'group-1', status: 'ACTIVE',
       potEnabled: true, contributionAmount: '5.00', createdAt: new Date(), closedAt: null,
@@ -160,6 +159,17 @@ describe('POST /api/seasons — money pot validation', () => {
       method: 'POST',
       url: '/api/seasons',
       payload: { name: 'Spring', potEnabled: true, contributionAmount: 0 },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when contributionAmount is negative', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons',
+      payload: { name: 'Spring', potEnabled: true, contributionAmount: -5 },
       cookies: { token: groupToken(app) },
     })
 
