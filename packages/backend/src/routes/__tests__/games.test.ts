@@ -82,5 +82,6 @@ describe('POST /api/games/:id/close', () => {
     })
 
     expect(res.statusCode).toBe(200)
+    expect(res.json().status).toBe('CLOSED')
   })
 })
