@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import bcrypt from 'bcryptjs'
-import { buildApp, groupToken } from '../../test/helpers.js'
+import { buildApp, groupToken, adminToken } from '../../test/helpers.js'
 import type { FastifyInstance } from 'fastify'
 
 vi.mock('../../lib/prisma.js')
@@ -118,6 +118,38 @@ describe('GET /api/auth/me', () => {
     })
 
     expect(res.statusCode).toBe(401)
+  })
+})
+
+describe('GET /api/auth/me — currency field', () => {
+  it('returns currency for group user', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce({
+      id: 'group-1', name: 'Test Group', username: 'test-group', currency: 'GBP',
+    } as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json().currency).toBe('GBP')
+  })
+
+  it('does not include currency for platform admin', async () => {
+    vi.mocked(prisma.admin.findUnique).mockResolvedValueOnce({
+      id: 'admin-1', username: 'admin',
+    } as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).not.toHaveProperty('currency')
   })
 })
 

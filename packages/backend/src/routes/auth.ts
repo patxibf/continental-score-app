@@ -78,7 +78,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     if (payload.role === 'group') {
       const group = await prisma.group.findUnique({
         where: { id: payload.groupId },
-        select: { id: true, name: true, username: true },
+        select: { id: true, name: true, username: true, currency: true },
       })
       return reply.send({
         role: 'group',
