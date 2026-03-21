@@ -26,7 +26,11 @@ export async function buildApp(): Promise<FastifyInstance> {
 }
 
 export function groupToken(app: FastifyInstance, groupId = 'group-1'): string {
-  return app.jwt.sign({ role: 'group', groupId })
+  return app.jwt.sign({ role: 'group', groupId, groupAccess: 'admin' })
+}
+
+export function memberToken(app: FastifyInstance, groupId = 'group-1'): string {
+  return app.jwt.sign({ role: 'group', groupId, groupAccess: 'member' })
 }
 
 export function adminToken(app: FastifyInstance, adminId = 'admin-1'): string {

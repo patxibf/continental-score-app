@@ -35,7 +35,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post(
     '/api/seasons/:seasonId/games',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { seasonId } = request.params as { seasonId: string }
@@ -125,7 +125,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post(
     '/api/games/:id/close',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
@@ -159,7 +159,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
   )
   fastify.delete(
     '/api/games/:id',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }

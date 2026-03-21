@@ -42,7 +42,7 @@ const playerRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post(
     '/api/players',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const body = createPlayerSchema.safeParse(request.body)
@@ -65,7 +65,7 @@ const playerRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.patch(
     '/api/players/:id',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
@@ -117,7 +117,7 @@ const playerRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.delete(
     '/api/players/:id/link',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }

@@ -7,10 +7,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
+import { useAuth } from '@/hooks/useAuth'
 import { Plus, ChevronRight } from 'lucide-react'
 
 export default function Seasons() {
   const queryClient = useQueryClient()
+  const { isGroupAdmin } = useAuth()
   const [dialogOpen, setDialogOpen] = useState(false)
   const [name, setName] = useState('')
 
@@ -39,10 +41,12 @@ export default function Seasons() {
             Seasons
           </h1>
         </div>
-        <Button onClick={() => setDialogOpen(true)} size="sm" className="gap-1.5">
-          <Plus className="h-3.5 w-3.5" />
-          New
-        </Button>
+        {isGroupAdmin && (
+          <Button onClick={() => setDialogOpen(true)} size="sm" className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" />
+            New
+          </Button>
+        )}
       </div>
 
       {isLoading && (
@@ -87,36 +91,38 @@ export default function Seasons() {
         )}
       </div>
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
-          <DialogHeader>
-            <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
-              New Season
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={e => { e.preventDefault(); createMutation.mutate({ name }) }} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="season-name" className="text-xs uppercase tracking-widest text-muted-foreground">
-                Season Name
-              </Label>
-              <Input
-                id="season-name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="e.g. Summer 2024"
-                required
-                className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? 'Creating…' : 'Create Season'}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {isGroupAdmin && (
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+          <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
+            <DialogHeader>
+              <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
+                New Season
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={e => { e.preventDefault(); createMutation.mutate({ name }) }} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="season-name" className="text-xs uppercase tracking-widest text-muted-foreground">
+                  Season Name
+                </Label>
+                <Input
+                  id="season-name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="e.g. Summer 2024"
+                  required
+                  className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
+                />
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setDialogOpen(false)}>Cancel</Button>
+                <Button type="submit" disabled={createMutation.isPending}>
+                  {createMutation.isPending ? 'Creating…' : 'Create Season'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   )
 }

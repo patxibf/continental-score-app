@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { buildApp, groupToken } from '../../test/helpers.js'
+import { buildApp, groupToken, memberToken } from '../../test/helpers.js'
 import type { FastifyInstance } from 'fastify'
 
 vi.mock('../../lib/prisma.js')
@@ -109,5 +109,17 @@ describe('GET /api/seasons/:id/standings', () => {
     })
 
     expect(res.statusCode).toBe(404)
+  })
+})
+
+describe('POST /api/seasons — member access', () => {
+  it('returns 403 when called with member token', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons',
+      payload: { name: 'Test Season' },
+      cookies: { token: memberToken(app) },
+    })
+    expect(res.statusCode).toBe(403)
   })
 })

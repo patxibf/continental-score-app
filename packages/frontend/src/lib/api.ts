@@ -39,6 +39,7 @@ export const api = {
 // Types
 export interface AuthUser {
   role: 'admin' | 'group'
+  groupAccess?: 'admin' | 'member'
   groupId?: string
   groupName?: string
   username?: string
@@ -118,4 +119,5 @@ export interface Group {
   name: string
   username: string
   createdAt: string
+  hasMemberPassword?: boolean
 }

@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
+import { useAuth } from '@/hooks/useAuth'
 import { Plus, Pencil } from 'lucide-react'
 
 function PlayerDialog({
@@ -91,6 +92,7 @@ function PlayerDialog({
 export default function Players() {
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingPlayer, setEditingPlayer] = useState<Player | undefined>()
+  const { isGroupAdmin } = useAuth()
 
   const { data: players, isLoading } = useQuery<Player[]>({
     queryKey: ['players'],
@@ -109,10 +111,12 @@ export default function Players() {
             Players
           </h1>
         </div>
-        <Button onClick={openCreate} size="sm" className="gap-1.5">
-          <Plus className="h-3.5 w-3.5" />
-          Add
-        </Button>
+        {isGroupAdmin && (
+          <Button onClick={openCreate} size="sm" className="gap-1.5">
+            <Plus className="h-3.5 w-3.5" />
+            Add
+          </Button>
+        )}
       </div>
 
       {isLoading && (
@@ -135,14 +139,16 @@ export default function Players() {
                 )}
               </div>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => openEdit(player)}
-              className="text-muted-foreground hover:text-[var(--gold)] h-8 w-8"
-            >
-              <Pencil className="h-3.5 w-3.5" />
-            </Button>
+            {isGroupAdmin && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => openEdit(player)}
+                className="text-muted-foreground hover:text-[var(--gold)] h-8 w-8"
+              >
+                <Pencil className="h-3.5 w-3.5" />
+              </Button>
+            )}
           </div>
         ))}
         {players?.length === 0 && (

@@ -6,11 +6,13 @@ import { AVATAR_EMOJIS } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
+import { useAuth } from '@/hooks/useAuth'
 import { Plus, ChevronRight, Lock, Trophy, Star } from 'lucide-react'
 
 export default function SeasonDetail() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
+  const { isGroupAdmin } = useAuth()
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
   const [standingsSort, setStandingsSort] = useState<'points' | 'wins'>('points')
 
@@ -77,7 +79,7 @@ export default function SeasonDetail() {
             {season.status}
           </span>
         </div>
-        {season.status === 'ACTIVE' && (
+        {season.status === 'ACTIVE' && isGroupAdmin && (
           <div className="flex gap-2 mt-1">
             <Button variant="outline" size="sm" onClick={() => setCloseDialogOpen(true)} className="gap-1.5 text-xs">
               <Lock className="h-3 w-3" />
@@ -88,7 +90,7 @@ export default function SeasonDetail() {
       </div>
 
       {/* New game button */}
-      {season.status === 'ACTIVE' && (
+      {season.status === 'ACTIVE' && isGroupAdmin && (
         <Link to={`/seasons/${id}/games/new`}>
           <Button className="w-full gap-2 h-11">
             <Plus className="h-4 w-4" />

@@ -15,14 +15,15 @@ model Admin {
 }
 
 model Group {
-  id            String         @id @default(uuid())
-  name          String
-  username      String         @unique
-  passwordHash  String
-  createdAt     DateTime       @default(now())
-  groupPlayers  GroupPlayer[]
-  seasons       Season[]
-  telegramChats TelegramChat[]
+  id                 String         @id @default(uuid())
+  name               String
+  username           String         @unique
+  passwordHash       String
+  memberPasswordHash String?
+  createdAt          DateTime       @default(now())
+  groupPlayers       GroupPlayer[]
+  seasons            Season[]
+  telegramChats      TelegramChat[]
 }
 
 model Player {

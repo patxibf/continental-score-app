@@ -120,3 +120,70 @@ describe('GET /api/auth/me', () => {
     expect(res.statusCode).toBe(401)
   })
 })
+
+describe('POST /api/auth/login — group dual password', () => {
+  it('returns groupAccess=admin when admin password matches', async () => {
+    const bcrypt = await import('bcryptjs')
+    const adminHash = await bcrypt.hash('adminpass', 1)
+    vi.mocked(prisma.admin.findUnique).mockResolvedValueOnce(null)
+    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce({
+      id: 'g1', name: 'Test Group', username: 'testgroup',
+      passwordHash: adminHash,
+      memberPasswordHash: null,
+      createdAt: new Date(),
+      telegramChats: [],
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'testgroup', password: 'adminpass' },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toMatchObject({ role: 'group', groupAccess: 'admin' })
+  })
+
+  it('returns groupAccess=member when member password matches', async () => {
+    const bcrypt = await import('bcryptjs')
+    const adminHash = await bcrypt.hash('adminpass', 1)
+    const memberHash = await bcrypt.hash('memberpass', 1)
+    vi.mocked(prisma.admin.findUnique).mockResolvedValueOnce(null)
+    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce({
+      id: 'g1', name: 'Test Group', username: 'testgroup',
+      passwordHash: adminHash,
+      memberPasswordHash: memberHash,
+      createdAt: new Date(),
+      telegramChats: [],
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'testgroup', password: 'memberpass' },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toMatchObject({ role: 'group', groupAccess: 'member' })
+  })
+
+  it('returns 401 when neither password matches', async () => {
+    const bcrypt = await import('bcryptjs')
+    vi.mocked(prisma.admin.findUnique).mockResolvedValueOnce(null)
+    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce({
+      id: 'g1', name: 'Test Group', username: 'testgroup',
+      passwordHash: await bcrypt.hash('adminpass', 1),
+      memberPasswordHash: await bcrypt.hash('memberpass', 1),
+      createdAt: new Date(),
+      telegramChats: [],
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { username: 'testgroup', password: 'wrongpass' },
+    })
+
+    expect(res.statusCode).toBe(401)
+  })
+})

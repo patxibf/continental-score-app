@@ -27,7 +27,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post(
     '/api/seasons',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const body = createSeasonSchema.safeParse(request.body)
@@ -45,7 +45,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.patch(
     '/api/seasons/:id',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
@@ -70,7 +70,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post(
     '/api/seasons/:id/close',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
@@ -122,7 +122,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post(
     '/api/seasons/:id/players',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
@@ -161,7 +161,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.delete(
     '/api/seasons/:id/players/:playerId',
-    { preHandler: [fastify.requireGroup] },
+    { preHandler: [fastify.requireGroupAdmin] },
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id, playerId } = request.params as { id: string; playerId: string }

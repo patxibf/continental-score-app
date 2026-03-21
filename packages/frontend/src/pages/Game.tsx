@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
+import { useAuth } from '@/hooks/useAuth'
 
 function LiveScoreboard({ game, totals }: { game: GameType; totals: Record<string, number> }) {
   const sorted = [...game.players].sort((a, b) => (totals[a.playerId] || 0) - (totals[b.playerId] || 0))
@@ -204,6 +205,7 @@ export default function GamePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const { isGroupAdmin } = useAuth()
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
   const [abortDialogOpen, setAbortDialogOpen] = useState(false)
   const [editingRoundId, setEditingRoundId] = useState<string | null>(null)
@@ -282,7 +284,7 @@ export default function GamePage() {
             Game
           </h1>
         </div>
-        {game.status === 'IN_PROGRESS' && (
+        {game.status === 'IN_PROGRESS' && isGroupAdmin && (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setAbortDialogOpen(true)} className="text-xs text-destructive border-destructive/40 hover:bg-destructive/10">
               Abort
@@ -326,7 +328,7 @@ export default function GamePage() {
         />
       )}
 
-      {isGameComplete && game.status === 'IN_PROGRESS' && (
+      {isGameComplete && game.status === 'IN_PROGRESS' && isGroupAdmin && (
         <div className="felt-card p-6 text-center border-[rgba(201,168,76,0.3)] gold-glow">
           <p className="text-2xl mb-1" style={{ fontFamily: 'Cormorant Garamond, serif', color: 'var(--gold)' }}>
             All 7 rounds complete!
@@ -360,7 +362,7 @@ export default function GamePage() {
                     <span className="text-sm font-semibold text-[var(--gold)]">Round {round.roundNumber}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">{ROUNDS_INFO[round.roundNumber - 1]?.description}</span>
-                      {game.status === 'IN_PROGRESS' && (
+                      {game.status === 'IN_PROGRESS' && isGroupAdmin && (
                         <button
                           onClick={() => setEditingRoundId(round.id)}
                           className="text-xs text-muted-foreground hover:text-[var(--gold)] transition-colors px-1.5 py-0.5 rounded border border-transparent hover:border-[rgba(201,168,76,0.3)]"

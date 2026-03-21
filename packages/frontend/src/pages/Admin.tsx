@@ -8,6 +8,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { toast } from '@/hooks/useToast'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 
+function toSlugPreview(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50)
+}
+
 function GroupDialog({
   open, onClose, group,
 }: {
@@ -15,19 +25,19 @@ function GroupDialog({
 }) {
   const queryClient = useQueryClient()
   const [name, setName] = useState(group?.name || '')
-  const [username, setUsername] = useState(group?.username || '')
   const [password, setPassword] = useState('')
+  const [memberPassword, setMemberPassword] = useState('')
 
   useEffect(() => {
     if (open) {
       setName(group?.name || '')
-      setUsername(group?.username || '')
       setPassword('')
+      setMemberPassword('')
     }
   }, [open, group])
 
   const mutation = useMutation({
-    mutationFn: (data: { name?: string; username?: string; password?: string }) =>
+    mutationFn: (data: { name?: string; password?: string; memberPassword?: string }) =>
       group
         ? api.patch<Group>(`/admin/groups/${group.id}`, data)
         : api.post<Group>('/admin/groups', data),
@@ -42,16 +52,19 @@ function GroupDialog({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!name.trim()) { toast({ title: 'Group name is required', variant: 'destructive' }); return }
-    if (!group && !username.trim()) { toast({ title: 'Username is required', variant: 'destructive' }); return }
-    if (!group && username.length < 3) { toast({ title: 'Username must be at least 3 characters', variant: 'destructive' }); return }
     if ((!group && password.length < 6) || (password && password.length < 6)) {
       toast({ title: 'Password must be at least 6 characters', variant: 'destructive' }); return
     }
-    const data: Record<string, string> = { name }
-    if (!group) data.username = username
-    if (password) data.password = password
-    mutation.mutate(data)
+    if (memberPassword && memberPassword.length < 6) {
+      toast({ title: 'Member password must be at least 6 characters', variant: 'destructive' }); return
+    }
+    const payload: Record<string, string> = { name }
+    if (password) payload.password = password
+    if (memberPassword) payload.memberPassword = memberPassword
+    mutation.mutate(payload)
   }
+
+  const slugPreview = toSlugPreview(name)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -73,25 +86,16 @@ function GroupDialog({
               required
               className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
             />
+            {!group && name && (
+              <p className="text-xs text-muted-foreground">Login handle: @{slugPreview || '…'}</p>
+            )}
+            {group && (
+              <p className="text-xs text-muted-foreground">Login handle: @{group.username}</p>
+            )}
           </div>
-          {!group && (
-            <div className="space-y-2">
-              <Label htmlFor="group-username" className="text-xs uppercase tracking-widest text-muted-foreground">
-                Username
-              </Label>
-              <Input
-                id="group-username"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder="lowercase, numbers, hyphens"
-                required
-                className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
-              />
-            </div>
-          )}
           <div className="space-y-2">
             <Label htmlFor="group-password" className="text-xs uppercase tracking-widest text-muted-foreground">
-              Password {group && <span className="normal-case tracking-normal text-muted-foreground/60">(leave blank to keep)</span>}
+              Admin Password {group && <span className="normal-case tracking-normal text-muted-foreground/60">(leave blank to keep)</span>}
             </Label>
             <Input
               id="group-password"
@@ -101,6 +105,23 @@ function GroupDialog({
               required={!group}
               className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
             />
+          </div>
+          {/* Member Password */}
+          <div className="space-y-1.5">
+            <Label htmlFor="member-password" className="text-xs uppercase tracking-widest text-muted-foreground">
+              Member Password
+            </Label>
+            <Input
+              id="member-password"
+              type="password"
+              value={memberPassword}
+              onChange={e => setMemberPassword(e.target.value)}
+              placeholder="Optional — share with players for view-only access"
+              className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
+            />
+            <p className="text-xs text-muted-foreground">
+              Members can view scores and submit rounds, but cannot manage seasons, games, or players.
+            </p>
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
@@ -162,7 +183,14 @@ export default function Admin() {
                 🃏
               </div>
               <div>
-                <p className="font-semibold text-sm">{group.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold text-sm">{group.name}</p>
+                  {group.hasMemberPassword && (
+                    <span className="text-xs text-muted-foreground border border-[rgba(201,168,76,0.2)] rounded px-1.5 py-0.5 leading-none">
+                      Members enabled
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-muted-foreground">@{group.username}</p>
               </div>
             </div>

@@ -18,41 +18,30 @@ afterEach(async () => {
 
 describe('POST /api/admin/groups', () => {
   it('creates a group and returns 201', async () => {
-    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce(null) // username not taken
+    vi.mocked(prisma.group.findUnique).mockResolvedValue(null) // no slug conflict
     vi.mocked(prisma.group.create).mockResolvedValueOnce({
       id: 'g-new',
       name: 'Test Group',
-      username: 'testgroup',
+      username: 'test-group',
       createdAt: new Date(),
     } as any)
 
     const res = await app.inject({
       method: 'POST',
       url: '/api/admin/groups',
-      payload: { name: 'Test Group', username: 'testgroup', password: 'secret123' },
+      payload: { name: 'Test Group', password: 'secret123' },
       cookies: { token: adminToken(app) },
     })
 
     expect(res.statusCode).toBe(201)
-    expect(res.json()).toMatchObject({ name: 'Test Group', username: 'testgroup' })
-  })
-
-  it('returns 400 when username is shorter than 3 chars', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Test', username: 'ab', password: 'secret123' },
-      cookies: { token: adminToken(app) },
-    })
-
-    expect(res.statusCode).toBe(400)
+    expect(res.json()).toMatchObject({ name: 'Test Group', username: 'test-group' })
   })
 
   it('returns 400 when password is shorter than 6 chars', async () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/admin/groups',
-      payload: { name: 'Test', username: 'testgroup', password: '123' },
+      payload: { name: 'Test', password: '123' },
       cookies: { token: adminToken(app) },
     })
 
@@ -63,7 +52,7 @@ describe('POST /api/admin/groups', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/admin/groups',
-      payload: { name: 'Test', username: 'testgroup', password: 'secret123' },
+      payload: { name: 'Test', password: 'secret123' },
       cookies: { token: groupToken(app) },
     })
 
@@ -74,10 +63,61 @@ describe('POST /api/admin/groups', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/admin/groups',
-      payload: { name: 'Test', username: 'testgroup', password: 'secret123' },
+      payload: { name: 'Test', password: 'secret123' },
     })
 
     expect(res.statusCode).toBe(401)
+  })
+})
+
+describe('POST /api/admin/groups — auto-slug + member password', () => {
+  it('auto-generates slug from name', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValue(null) // no conflict
+    vi.mocked(prisma.group.create).mockResolvedValueOnce({
+      id: 'g-new', name: 'Friday Night', username: 'friday-night',
+      createdAt: new Date(),
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/admin/groups',
+      payload: { name: 'Friday Night', password: 'secret123' },
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(201)
+    expect(res.json()).toMatchObject({ name: 'Friday Night', username: 'friday-night' })
+  })
+
+  it('creates group with member password and hashes it', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.group.create).mockResolvedValueOnce({
+      id: 'g-new', name: 'Test', username: 'test', createdAt: new Date(),
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/admin/groups',
+      payload: { name: 'Test', password: 'adminpass', memberPassword: 'memberpass' },
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(201)
+    const createCall = vi.mocked(prisma.group.create).mock.calls[0][0]
+    expect(createCall.data).toHaveProperty('memberPasswordHash')
+    expect(typeof (createCall.data as any).memberPasswordHash).toBe('string')
+    // The hash must NOT be the plain text password
+    expect((createCall.data as any).memberPasswordHash).not.toBe('memberpass')
+  })
+
+  it('returns 400 when no name provided', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/admin/groups',
+      payload: { password: 'secret123' },
+      cookies: { token: adminToken(app) },
+    })
+    expect(res.statusCode).toBe(400)
   })
 })
 
