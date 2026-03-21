@@ -145,3 +145,101 @@ describe('DELETE /api/admin/groups/:id', () => {
     expect(res.statusCode).toBe(403)
   })
 })
+
+describe('POST /api/admin/groups — currency field', () => {
+  it('stores currency GBP when provided', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.group.create).mockResolvedValueOnce({
+      id: 'g1', name: 'Test', username: 'test', currency: 'GBP', createdAt: new Date(),
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/admin/groups',
+      payload: { name: 'Test', password: 'secret123', currency: 'GBP' },
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(201)
+    expect(res.json().currency).toBe('GBP')
+  })
+
+  it('defaults to EUR when currency is omitted', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValue(null)
+    vi.mocked(prisma.group.create).mockResolvedValueOnce({
+      id: 'g1', name: 'Test', username: 'test', currency: 'EUR', createdAt: new Date(),
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/admin/groups',
+      payload: { name: 'Test', password: 'secret123' },
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(201)
+    expect(res.json()).toHaveProperty('currency')
+  })
+
+  it('returns 400 for invalid currency JPY', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/admin/groups',
+      payload: { name: 'Test', password: 'secret123', currency: 'JPY' },
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+})
+
+describe('PATCH /api/admin/groups/:id — currency field', () => {
+  it('updates currency to USD', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce({
+      id: 'g1', name: 'Test', username: 'test', currency: 'EUR',
+      passwordHash: 'h', memberPasswordHash: null, createdAt: new Date(), seasons: [], groupPlayers: [], telegramChats: [],
+    } as any)
+    vi.mocked(prisma.group.update).mockResolvedValueOnce({
+      id: 'g1', name: 'Test', username: 'test', currency: 'USD', createdAt: new Date(),
+    } as any)
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/admin/groups/g1',
+      payload: { currency: 'USD' },
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json().currency).toBe('USD')
+  })
+
+  it('returns 400 for invalid currency XXX', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/admin/groups/g1',
+      payload: { currency: 'XXX' },
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+})
+
+describe('GET /api/admin/groups — includes currency', () => {
+  it('returns currency in group list', async () => {
+    vi.mocked(prisma.group.findMany).mockResolvedValueOnce([{
+      id: 'g1', name: 'Test', username: 'test', currency: 'GBP',
+      createdAt: new Date(), memberPasswordHash: null,
+    }] as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/admin/groups',
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json()[0].currency).toBe('GBP')
+  })
+})
