@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-and-build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: continental
+          POSTGRES_PASSWORD: continental_test
+          POSTGRES_DB: continental_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npm run db:generate -w packages/backend
+        env:
+          DATABASE_URL: postgresql://continental:continental_test@localhost:5432/continental_test
+
+      - name: Run migrations
+        run: npm run db:migrate:deploy -w packages/backend
+        env:
+          DATABASE_URL: postgresql://continental:continental_test@localhost:5432/continental_test
+
+      - name: Build backend
+        run: npm run build -w packages/backend
+
+      - name: Build frontend
+        run: npm run build -w packages/frontend

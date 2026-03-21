@@ -1,0 +1,25 @@
+{
+  "name": "continental",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev -w packages/backend\" \"npm run dev -w packages/frontend\"",
+    "dev:bot": "npm run dev -w packages/bot",
+    "build": "npm run build -w packages/backend && npm run build -w packages/frontend",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test -w packages/backend && npm run test -w packages/frontend",
+    "test:watch": "concurrently \"npm run test:watch -w packages/backend\" \"npm run test:watch -w packages/frontend\"",
+    "test:coverage": "npm run test:coverage -w packages/backend && npm run test:coverage -w packages/frontend",
+    "db:migrate": "npm run db:migrate -w packages/backend",
+    "db:seed": "npm run db:seed -w packages/backend",
+    "db:studio": "npm run db:studio -w packages/backend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "playwright": "^1.58.2",
+    "typescript": "^5.3.3"
+  }
+}

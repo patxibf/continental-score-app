@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Group {
+  id            String         @id @default(uuid())
+  name          String
+  username      String         @unique
+  passwordHash  String
+  createdAt     DateTime       @default(now())
+  groupPlayers  GroupPlayer[]
+  seasons       Season[]
+  telegramChats TelegramChat[]
+}
+
+model Player {
+  id            String         @id @default(uuid())
+  name          String
+  avatar        String
+  email         String?
+  phone         String?
+  active        Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  groupLinks    GroupPlayer[]
+  seasonLinks   SeasonPlayer[]
+  gameLinks     GamePlayer[]
+  roundScores   RoundScore[]
+  telegramUsers TelegramUser[]
+}
+
+model GroupPlayer {
+  id       String   @id @default(uuid())
+  groupId  String
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  playerId String
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([groupId, playerId])
+}
+
+model Season {
+  id        String         @id @default(uuid())
+  groupId   String
+  group     Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name      String
+  status    SeasonStatus   @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  closedAt  DateTime?
+  players   SeasonPlayer[]
+  games     Game[]
+}
+
+enum SeasonStatus {
+  ACTIVE
+  CLOSED
+}
+
+model SeasonPlayer {
+  id       String   @id @default(uuid())
+  seasonId String
+  season   Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  playerId String
+  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  joinedAt DateTime @default(now())
+
+  @@unique([seasonId, playerId])
+}
+
+model Game {
+  id        String       @id @default(uuid())
+  seasonId  String
+  season    Season       @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  status    GameStatus   @default(IN_PROGRESS)
+  createdAt DateTime     @default(now())
+  closedAt  DateTime?
+  players   GamePlayer[]
+  rounds    Round[]
+}
+
+enum GameStatus {
+  IN_PROGRESS
+  CLOSED
+}
+
+model GamePlayer {
+  id       String @id @default(uuid())
+  gameId   String
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([gameId, playerId])
+}
+
+model Round {
+  id          String       @id @default(uuid())
+  gameId      String
+  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  roundNumber Int
+  completedAt DateTime?
+  scores      RoundScore[]
+}
+
+model RoundScore {
+  id       String  @id @default(uuid())
+  roundId  String
+  round    Round   @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  playerId String
+  player   Player  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  points   Int
+  wentOut  Boolean @default(false)
+
+  @@unique([roundId, playerId])
+}
+
+model TelegramChat {
+  id      String @id @default(uuid())
+  chatId  String @unique
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+}
+
+model TelegramUser {
+  id             String @id @default(uuid())
+  telegramUserId String @unique
+  playerId       String
+  player         Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+}

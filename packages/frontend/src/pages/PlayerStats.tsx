@@ -1,0 +1,212 @@
+import { useParams, Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { api } from '@/lib/api'
+import { AVATAR_EMOJIS } from '@/lib/utils'
+import {
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
+  ReferenceLine, Area, AreaChart,
+} from 'recharts'
+
+interface PlayerStatsData {
+  player: { id: string; name: string; avatar: string }
+  gamesPlayed: number
+  totalPoints: number
+  avgPoints: number
+  bestGame: number | null
+  worstGame: number | null
+  recentGames: Array<{
+    gameId: string
+    seasonName: string
+    totalPoints: number
+    roundsPlayed: number
+    date: string
+  }>
+}
+
+const GOLD = '#c9a84c'
+const GOLD_BRIGHT = '#e8c76a'
+const GOLD_DIM = '#7a6230'
+
+function CustomTooltip({ active, payload, label }: any) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="felt-card px-3 py-2 text-xs">
+      <p className="text-muted-foreground mb-0.5">{label}</p>
+      <p className="font-mono text-[var(--gold-bright)] font-semibold">{payload[0].value} pts</p>
+    </div>
+  )
+}
+
+function StatTile({ value, label, highlight }: { value: string | number; label: string; highlight?: boolean }) {
+  return (
+    <div className={`felt-card p-4 text-center ${highlight ? 'border-[rgba(201,168,76,0.3)]' : ''}`}>
+      <p
+        className="leading-none mb-1.5"
+        style={{
+          fontFamily: 'Cormorant Garamond, serif',
+          fontSize: '2rem',
+          fontWeight: 600,
+          color: highlight ? 'var(--gold-bright)' : 'var(--gold)',
+        }}
+      >
+        {value}
+      </p>
+      <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</p>
+    </div>
+  )
+}
+
+export default function PlayerStats() {
+  const { id } = useParams<{ id: string }>()
+
+  const { data: stats, isLoading } = useQuery<PlayerStatsData>({
+    queryKey: ['player-stats', id],
+    queryFn: () => api.get<PlayerStatsData>(`/players/${id}/stats`),
+  })
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6 fade-up">
+        <div className="h-24 rounded-xl bg-[rgba(201,168,76,0.04)] animate-pulse" />
+        <div className="grid grid-cols-2 gap-3">
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 rounded-xl bg-[rgba(201,168,76,0.04)] animate-pulse" />)}
+        </div>
+      </div>
+    )
+  }
+  if (!stats) return <p className="text-muted-foreground">Player not found</p>
+
+  const chartData = [...stats.recentGames].reverse().map((g, i) => ({
+    game: `G${i + 1}`,
+    pts: g.totalPoints,
+    date: new Date(g.date).toLocaleDateString('en', { month: 'short', day: 'numeric' }),
+  }))
+
+  const avg = stats.avgPoints
+
+  return (
+    <div className="space-y-6 fade-up">
+      {/* Header */}
+      <div className="felt-card p-5 flex items-center gap-5">
+        <div className="relative">
+          <div className="w-16 h-16 rounded-full bg-[rgba(201,168,76,0.08)] flex items-center justify-center text-4xl border border-[rgba(201,168,76,0.2)]">
+            {AVATAR_EMOJIS[stats.player.avatar] || '🎮'}
+          </div>
+        </div>
+        <div className="flex-1">
+          <h1
+            className="text-3xl font-bold text-[var(--gold)]"
+            style={{ fontFamily: 'Cormorant Garamond, serif' }}
+          >
+            {stats.player.name}
+          </h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {stats.gamesPlayed} {stats.gamesPlayed === 1 ? 'game' : 'games'} played
+          </p>
+        </div>
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-2 gap-3">
+        <StatTile value={stats.avgPoints} label="Avg pts / game" highlight />
+        <StatTile value={stats.bestGame ?? '—'} label="Best game" />
+        <StatTile value={stats.worstGame ?? '—'} label="Worst game" />
+        <StatTile value={stats.gamesPlayed} label="Total games" />
+      </div>
+
+      {/* Score history chart */}
+      {chartData.length > 1 && (
+        <div className="felt-card p-5">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">
+            Score History
+          </p>
+          <ResponsiveContainer width="100%" height={160}>
+            <AreaChart data={chartData} margin={{ top: 8, right: 4, left: -24, bottom: 0 }}>
+              <defs>
+                <linearGradient id="areaGold" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={GOLD} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={GOLD} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis dataKey="game" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(201,168,76,0.2)', strokeWidth: 1 }} />
+              <ReferenceLine
+                y={avg}
+                stroke={GOLD_DIM}
+                strokeDasharray="3 3"
+                label={{ value: `avg ${avg}`, fill: GOLD_DIM, fontSize: 9, position: 'right' }}
+              />
+              <Area
+                type="monotone"
+                dataKey="pts"
+                stroke={GOLD_BRIGHT}
+                strokeWidth={2}
+                fill="url(#areaGold)"
+                dot={{ fill: GOLD, strokeWidth: 0, r: 3 }}
+                activeDot={{ fill: GOLD_BRIGHT, r: 4, strokeWidth: 0 }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Performance indicator */}
+      {stats.bestGame !== null && stats.worstGame !== null && stats.bestGame !== stats.worstGame && (
+        <div className="felt-card p-4">
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Score range</p>
+          <div className="flex items-center gap-3 text-xs">
+            <span className="text-[var(--gold-bright)] font-mono w-10 text-right">{stats.bestGame}</span>
+            <div className="flex-1 relative h-2 rounded-full bg-[rgba(201,168,76,0.1)] overflow-hidden">
+              <div
+                className="absolute left-0 top-0 h-full rounded-full"
+                style={{
+                  background: `linear-gradient(to right, var(--gold-dim), var(--gold-bright))`,
+                  width: `${((avg - stats.bestGame) / (stats.worstGame - stats.bestGame)) * 100}%`,
+                }}
+              />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[var(--gold)] border-2 border-[hsl(var(--background))]"
+                style={{
+                  left: `calc(${((avg - stats.bestGame) / (stats.worstGame - stats.bestGame)) * 100}% - 6px)`,
+                }}
+              />
+            </div>
+            <span className="text-muted-foreground font-mono w-10">{stats.worstGame}</span>
+          </div>
+          <p className="text-center text-[10px] text-muted-foreground mt-1">best ← avg → worst</p>
+        </div>
+      )}
+
+      {/* Recent games */}
+      {stats.recentGames.length > 0 && (
+        <div>
+          <div className="suit-divider text-xs mb-4">Recent Games</div>
+          <div className="space-y-2 stagger">
+            {stats.recentGames.map(game => (
+              <Link key={game.gameId} to={`/games/${game.gameId}/history`}>
+                <div className="felt-card px-4 py-3 flex items-center justify-between hover:border-[rgba(201,168,76,0.3)] transition-all duration-200 group fade-up">
+                  <div>
+                    <p className="font-medium text-sm group-hover:text-[var(--gold)] transition-colors">
+                      {game.seasonName}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {new Date(game.date).toLocaleDateString('en', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {' · '}{game.roundsPlayed} rounds
+                    </p>
+                  </div>
+                  <span
+                    className="font-mono text-lg font-semibold"
+                    style={{ fontFamily: 'Cormorant Garamond, serif', color: 'var(--gold)' }}
+                  >
+                    {game.totalPoints}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

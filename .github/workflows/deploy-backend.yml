@@ -1,0 +1,34 @@
+name: Deploy Backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'packages/backend/**'
+      - 'packages/bot/**'
+      - '.github/workflows/deploy-backend.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /app/continental
+            git pull origin main
+            npm ci
+            npm run db:generate -w packages/backend
+            npm run db:migrate:deploy -w packages/backend
+            npm run build -w packages/backend
+            npm run build -w packages/bot
+            pm2 restart continental-api || pm2 start packages/backend/dist/index.js --name continental-api
+            pm2 restart continental-bot || pm2 start packages/bot/dist/index.js --name continental-bot
+            pm2 save
