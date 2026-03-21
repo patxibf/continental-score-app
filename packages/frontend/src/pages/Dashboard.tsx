@@ -28,7 +28,7 @@ export default function Dashboard() {
     enabled: !!activeSeason,
   })
 
-  const inProgressGame = recentGames?.find(g => g.status === 'IN_PROGRESS')
+  const inProgressGames = recentGames?.filter(g => g.status === 'IN_PROGRESS') ?? []
 
   return (
     <div className="space-y-6 fade-up">
@@ -40,9 +40,9 @@ export default function Dashboard() {
         </h1>
       </div>
 
-      {/* Live game banner */}
-      {inProgressGame && (
-        <Link to={`/games/${inProgressGame.id}`}>
+      {/* Live game banners */}
+      {inProgressGames.map(game => (
+        <Link key={game.id} to={`/games/${game.id}`}>
           <div className="relative overflow-hidden rounded-xl border border-[rgba(37,99,235,0.35)] bg-white p-5 gold-glow transition-all duration-300 hover:border-[rgba(37,99,235,0.55)]">
             {/* Background glow */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--cobalt)] opacity-[0.04] rounded-full blur-2xl pointer-events-none" />
@@ -53,10 +53,10 @@ export default function Dashboard() {
                   <span className="text-xs uppercase tracking-widest text-[var(--cobalt)]">Live Game</span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Round {(inProgressGame._count?.rounds || 0) + 1} of 7
+                  Round {(game._count?.rounds || 0) + 1} of 7
                 </p>
                 <div className="flex gap-2 mt-3">
-                  {inProgressGame.players.map(gp => (
+                  {game.players.map(gp => (
                     <span key={gp.playerId} className="text-xl" title={gp.player.name}>
                       {AVATAR_EMOJIS[gp.player.avatar] || '🎮'}
                     </span>
@@ -72,9 +72,9 @@ export default function Dashboard() {
                       key={i}
                       className="w-4 h-1 rounded-full"
                       style={{
-                        background: i < (inProgressGame._count?.rounds || 0)
+                        background: i < (game._count?.rounds || 0)
                           ? 'var(--cobalt)'
-                          : i === (inProgressGame._count?.rounds || 0)
+                          : i === (game._count?.rounds || 0)
                           ? 'rgba(37,99,235,0.4)'
                           : 'rgba(37,99,235,0.1)',
                       }}
@@ -85,7 +85,7 @@ export default function Dashboard() {
             </div>
           </div>
         </Link>
-      )}
+      ))}
 
       {/* Active season card */}
       {activeSeason ? (
