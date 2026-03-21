@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/hooks/useAuth'
+import { haptic } from '@/lib/haptics'
 
 function LiveScoreboard({ game, totals }: { game: GameType; totals: Record<string, number> }) {
   const sorted = [...game.players].sort((a, b) => (totals[a.playerId] || 0) - (totals[b.playerId] || 0))
@@ -209,6 +210,7 @@ export default function GamePage() {
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
   const [abortDialogOpen, setAbortDialogOpen] = useState(false)
   const [editingRoundId, setEditingRoundId] = useState<string | null>(null)
+  const [undoDialogOpen, setUndoDialogOpen] = useState(false)
 
   const { data: game, isLoading } = useQuery<GameType>({
     queryKey: ['game', id],
@@ -221,6 +223,7 @@ export default function GamePage() {
       api.post<Round>(`/games/${id}/rounds`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', id] })
+      haptic('medium')
       toast({ title: 'Round saved!' })
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
@@ -250,8 +253,34 @@ export default function GamePage() {
     mutationFn: () => api.post(`/games/${id}/close`, { confirm: true }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', id] })
+      haptic('heavy')
       toast({ title: 'Game closed!' })
       navigate(`/games/${id}/history`)
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  })
+
+  const rematchMutation = useMutation({
+    mutationFn: () =>
+      api.post<GameType>(`/seasons/${game?.seasonId}/games`, {
+        playerIds: game?.players.map(gp => gp.playerId),
+      }),
+    onSuccess: (newGame) => {
+      haptic('medium')
+      navigate(`/games/${newGame.id}`)
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  })
+
+  const undoRoundMutation = useMutation({
+    mutationFn: () => {
+      const lastRound = game?.rounds?.[game.rounds.length - 1]
+      return api.delete(`/rounds/${lastRound!.id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', id] })
+      toast({ title: 'Last round undone' })
+      setUndoDialogOpen(false)
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   })
@@ -293,6 +322,25 @@ export default function GamePage() {
               Close Game
             </Button>
           </div>
+        )}
+        {game.status === 'IN_PROGRESS' && game.rounds && game.rounds.length > 0 && isGroupAdmin && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setUndoDialogOpen(true)}
+            className="text-xs"
+          >
+            Undo last round
+          </Button>
+        )}
+        {game.status === 'CLOSED' && isGroupAdmin && (
+          <Button
+            onClick={() => rematchMutation.mutate()}
+            disabled={rematchMutation.isPending}
+            size="sm"
+          >
+            {rematchMutation.isPending ? 'Starting…' : 'Rematch'}
+          </Button>
         )}
       </div>
 
@@ -392,6 +440,27 @@ export default function GamePage() {
           </div>
         </div>
       )}
+
+      <Dialog open={undoDialogOpen} onOpenChange={setUndoDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Undo Last Round</DialogTitle>
+            <DialogDescription>
+              This will delete Round {game?.rounds?.length} and cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setUndoDialogOpen(false)}>Cancel</Button>
+            <Button
+              variant="destructive"
+              onClick={() => undoRoundMutation.mutate()}
+              disabled={undoRoundMutation.isPending}
+            >
+              {undoRoundMutation.isPending ? 'Undoing…' : 'Undo Round'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={abortDialogOpen} onOpenChange={setAbortDialogOpen}>
         <DialogContent className="bg-white border-[var(--border-color)]">
