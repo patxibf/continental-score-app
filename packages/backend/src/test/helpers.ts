@@ -6,6 +6,7 @@ import authRoutes from '../routes/auth.js'
 import adminRoutes from '../routes/admin.js'
 import roundRoutes from '../routes/rounds.js'
 import seasonRoutes from '../routes/seasons.js'
+import statsRoutes from '../routes/stats.js'
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false })
@@ -20,6 +21,7 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(adminRoutes)
   await app.register(roundRoutes)
   await app.register(seasonRoutes)
+  await app.register(statsRoutes)
 
   await app.ready()
   return app
