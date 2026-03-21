@@ -323,9 +323,11 @@ export default function GamePage() {
             <Button variant="outline" size="sm" onClick={() => setAbortDialogOpen(true)} className="text-xs text-destructive border-destructive/40 hover:bg-destructive/10">
               Abort
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setCloseDialogOpen(true)} className="text-xs">
-              Close Game
-            </Button>
+            {isGameComplete && (
+              <Button variant="outline" size="sm" onClick={() => setCloseDialogOpen(true)} className="text-xs">
+                Close Game
+              </Button>
+            )}
           </div>
         )}
         {game.status === 'CLOSED' && isGroupAdmin && (
