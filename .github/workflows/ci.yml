@@ -47,6 +47,11 @@ jobs:
         env:
           DATABASE_URL: postgresql://continental:continental_test@localhost:5432/continental_test
 
+      - name: Run tests
+        run: npm test
+        env:
+          DATABASE_URL: postgresql://continental:continental_test@localhost:5432/continental_test
+
       - name: Build backend
         run: npm run build -w packages/backend
 
