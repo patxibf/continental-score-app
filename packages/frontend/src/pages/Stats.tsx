@@ -7,20 +7,19 @@ import {
   RadialBarChart, RadialBar, Cell,
 } from 'recharts'
 
-const GOLD = '#c9a84c'
-const GOLD_DIM = '#7a6230'
-const GOLD_BRIGHT = '#e8c76a'
-
-const PALETTE = [GOLD_BRIGHT, GOLD, '#a07a38', GOLD_DIM, '#5a4520', '#3d2f15', '#261e0d', '#1a1508']
+const COBALT = '#2563eb'
+const COBALT_MID = '#3b5cc4'
+const COBALT_DARK = '#1e3a8a'
+const PALETTE = ['#6b8ce8', COBALT, COBALT_MID, COBALT_DARK, '#1a3070', '#142558', '#0e1a40', '#09122e']
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
     <div className="felt-card px-3 py-2 text-sm">
-      <p className="text-[var(--gold)] font-semibold">{label}</p>
+      <p className="text-[var(--cobalt)] font-semibold">{label}</p>
       {payload.map((p: any) => (
         <p key={p.name} className="text-foreground/80">
-          {p.name}: <span className="font-mono text-[var(--gold-bright)]">{p.value}</span>
+          {p.name}: <span className="font-mono text-[var(--cobalt-dark)]">{p.value}</span>
         </p>
       ))}
     </div>
@@ -34,18 +33,18 @@ function WinRateRing({ winRate, size = 72 }: { winRate: number; size?: number })
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(201,168,76,0.1)" strokeWidth={6} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(37,99,235,0.1)" strokeWidth={6} />
       <circle
         cx={size / 2} cy={size / 2} r={r} fill="none"
-        stroke="url(#goldGrad)" strokeWidth={6}
+        stroke="url(#cobaltGrad)" strokeWidth={6}
         strokeDasharray={`${fill} ${circ}`}
         strokeLinecap="round"
         style={{ transition: 'stroke-dasharray 1s cubic-bezier(0.22,1,0.36,1)' }}
       />
       <defs>
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%" stopColor={GOLD_DIM} />
-          <stop offset="100%" stopColor={GOLD_BRIGHT} />
+        <linearGradient id="cobaltGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor={COBALT_MID} />
+          <stop offset="100%" stopColor={COBALT_DARK} />
         </linearGradient>
       </defs>
     </svg>
@@ -61,12 +60,12 @@ export default function Stats() {
   if (isLoading) {
     return (
       <div className="space-y-6 fade-up">
-        <h1 className="text-4xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           Statistics
         </h1>
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 rounded-xl bg-[rgba(201,168,76,0.04)] animate-pulse" />
+            <div key={i} className="h-20 rounded-xl bg-accent animate-pulse" />
           ))}
         </div>
       </div>
@@ -76,7 +75,7 @@ export default function Stats() {
   if (!leaderboard || leaderboard.length === 0) {
     return (
       <div className="space-y-6 fade-up">
-        <h1 className="text-4xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           Statistics
         </h1>
         <div className="felt-card p-12 text-center">
@@ -103,10 +102,7 @@ export default function Stats() {
   return (
     <div className="space-y-8 fade-up">
       <div>
-        <h1
-          className="text-4xl font-bold text-[var(--gold)]"
-          style={{ fontFamily: 'Cormorant Garamond, serif' }}
-        >
+        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           Statistics
         </h1>
         <p className="text-muted-foreground text-sm mt-1 tracking-wide">All-time standings</p>
@@ -120,7 +116,7 @@ export default function Stats() {
 
           return (
             <Link key={s.playerId} to={`/stats/players/${s.playerId}`}>
-              <div className="felt-card p-4 hover:border-[rgba(201,168,76,0.3)] transition-all duration-300 hover:shadow-[0_0_20px_rgba(201,168,76,0.08)] group fade-up">
+              <div className="felt-card p-4 hover:border-[rgba(37,99,235,0.3)] transition-all duration-300 hover:shadow-[0_0_20px_rgba(37,99,235,0.08)] group fade-up">
                 <div className="flex items-center gap-4">
                   {/* Rank */}
                   <div className="w-8 text-center flex-shrink-0">
@@ -137,7 +133,7 @@ export default function Stats() {
                   {/* Name + bar */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-semibold text-sm group-hover:text-[var(--gold)] transition-colors truncate">
+                      <span className="font-semibold text-sm group-hover:text-[var(--cobalt)] transition-colors truncate">
                         {s.playerName}
                       </span>
                       <span className="font-mono text-xs text-muted-foreground flex-shrink-0 ml-2">
@@ -159,7 +155,7 @@ export default function Stats() {
                   <div className="flex-shrink-0 relative">
                     <WinRateRing winRate={s.winRate ?? 0} size={52} />
                     <span
-                      className="absolute inset-0 flex items-center justify-center text-[10px] font-mono text-[var(--gold)]"
+                      className="absolute inset-0 flex items-center justify-center text-[10px] font-mono text-[var(--cobalt)]"
                       style={{ transform: 'rotate(0deg)' }}
                     >
                       {s.winRate}%
@@ -182,10 +178,10 @@ export default function Stats() {
             <BarChart data={barData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
               <XAxis dataKey="name" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(201,168,76,0.05)' }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(37,99,235,0.05)' }} />
               <Bar dataKey="avg" radius={[4, 4, 0, 0]} name="Avg pts">
                 {barData.map((_, i) => (
-                  <Cell key={i} fill={i === 0 ? GOLD_BRIGHT : i === 1 ? GOLD : GOLD_DIM} opacity={i > 2 ? 0.6 : 1} />
+                  <Cell key={i} fill={i === 0 ? COBALT_DARK : i === 1 ? COBALT : COBALT_MID} opacity={i > 2 ? 0.6 : 1} />
                 ))}
               </Bar>
             </BarChart>
@@ -205,7 +201,7 @@ export default function Stats() {
                 data={pieData.filter(d => d.value > 0)}
                 startAngle={90} endAngle={-270}
               >
-                <RadialBar dataKey="value" cornerRadius={4} background={{ fill: 'rgba(201,168,76,0.05)' }} />
+                <RadialBar dataKey="value" cornerRadius={4} background={{ fill: 'rgba(37,99,235,0.05)' }} />
                 <Tooltip content={<CustomTooltip />} />
               </RadialBarChart>
             </ResponsiveContainer>
@@ -214,7 +210,7 @@ export default function Stats() {
                 <div key={s.playerId} className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: PALETTE[i] }} />
                   <span className="text-xs text-muted-foreground truncate flex-1">{s.playerName.split(' ')[0]}</span>
-                  <span className="text-xs font-mono text-[var(--gold)] flex-shrink-0">{s.wins}W</span>
+                  <span className="text-xs font-mono text-[var(--cobalt)] flex-shrink-0">{s.wins}W</span>
                 </div>
               ))}
             </div>

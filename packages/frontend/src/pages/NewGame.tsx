@@ -46,7 +46,7 @@ export default function NewGame() {
     <div className="space-y-6 fade-up">
       <div>
         <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Let's play</p>
-        <h1 className="text-4xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
           New Game
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Select 2–8 players</p>
@@ -61,22 +61,22 @@ export default function NewGame() {
               onClick={() => togglePlayer(player.id)}
               className={`w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all duration-150 fade-up ${
                 selected
-                  ? 'border-[rgba(201,168,76,0.5)] bg-[rgba(201,168,76,0.06)] shadow-[0_0_12px_rgba(201,168,76,0.08)]'
-                  : 'border-[rgba(201,168,76,0.08)] bg-[var(--felt-card)] hover:border-[rgba(201,168,76,0.25)]'
+                  ? 'border-[rgba(37,99,235,0.5)] bg-[rgba(37,99,235,0.06)] shadow-[0_0_12px_rgba(37,99,235,0.08)]'
+                  : 'border-border bg-white hover:border-[rgba(37,99,235,0.25)]'
               }`}
             >
               <div className="flex items-center gap-4">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl border transition-all ${
-                  selected ? 'border-[rgba(201,168,76,0.5)] bg-[rgba(201,168,76,0.1)]' : 'border-[rgba(201,168,76,0.1)] bg-[rgba(255,255,255,0.03)]'
+                  selected ? 'border-[rgba(37,99,235,0.5)] bg-[rgba(37,99,235,0.1)]' : 'border-border bg-transparent'
                 }`}>
                   {AVATAR_EMOJIS[player.avatar] || '🎮'}
                 </div>
-                <span className={`font-semibold transition-colors ${selected ? 'text-[var(--gold)]' : ''}`}>
+                <span className={`font-semibold transition-colors ${selected ? 'text-[var(--cobalt)]' : ''}`}>
                   {player.name}
                 </span>
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                selected ? 'border-[var(--gold)] bg-[var(--gold)]' : 'border-[rgba(201,168,76,0.2)]'
+                selected ? 'border-[var(--cobalt)] bg-[var(--cobalt)]' : 'border-border'
               }`}>
                 {selected && <Check className="h-3 w-3 text-[hsl(var(--background))]" strokeWidth={3} />}
               </div>

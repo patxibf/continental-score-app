@@ -23,30 +23,29 @@ interface PlayerStatsData {
   }>
 }
 
-const GOLD = '#c9a84c'
-const GOLD_BRIGHT = '#e8c76a'
-const GOLD_DIM = '#7a6230'
+const COBALT = '#2563eb'
+const COBALT_DARK = '#1e3a8a'
+const COBALT_MID = '#3b5cc4'
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
   return (
     <div className="felt-card px-3 py-2 text-xs">
       <p className="text-muted-foreground mb-0.5">{label}</p>
-      <p className="font-mono text-[var(--gold-bright)] font-semibold">{payload[0].value} pts</p>
+      <p className="font-mono text-[var(--cobalt-dark)] font-semibold">{payload[0].value} pts</p>
     </div>
   )
 }
 
 function StatTile({ value, label, highlight }: { value: string | number; label: string; highlight?: boolean }) {
   return (
-    <div className={`felt-card p-4 text-center ${highlight ? 'border-[rgba(201,168,76,0.3)]' : ''}`}>
+    <div className={`felt-card p-4 text-center ${highlight ? 'border-[var(--cobalt)]' : ''}`}>
       <p
         className="leading-none mb-1.5"
         style={{
-          fontFamily: 'Cormorant Garamond, serif',
           fontSize: '2rem',
           fontWeight: 600,
-          color: highlight ? 'var(--gold-bright)' : 'var(--gold)',
+          color: highlight ? 'var(--cobalt-dark)' : 'var(--cobalt)',
         }}
       >
         {value}
@@ -67,9 +66,9 @@ export default function PlayerStats() {
   if (isLoading) {
     return (
       <div className="space-y-6 fade-up">
-        <div className="h-24 rounded-xl bg-[rgba(201,168,76,0.04)] animate-pulse" />
+        <div className="h-24 rounded-xl bg-accent animate-pulse" />
         <div className="grid grid-cols-2 gap-3">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 rounded-xl bg-[rgba(201,168,76,0.04)] animate-pulse" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 rounded-xl bg-accent animate-pulse" />)}
         </div>
       </div>
     )
@@ -89,15 +88,12 @@ export default function PlayerStats() {
       {/* Header */}
       <div className="felt-card p-5 flex items-center gap-5">
         <div className="relative">
-          <div className="w-16 h-16 rounded-full bg-[rgba(201,168,76,0.08)] flex items-center justify-center text-4xl border border-[rgba(201,168,76,0.2)]">
+          <div className="w-16 h-16 rounded-full bg-accent flex items-center justify-center text-4xl border border-[var(--border-color)]">
             {AVATAR_EMOJIS[stats.player.avatar] || '🎮'}
           </div>
         </div>
         <div className="flex-1">
-          <h1
-            className="text-3xl font-bold text-[var(--gold)]"
-            style={{ fontFamily: 'Cormorant Garamond, serif' }}
-          >
+          <h1 className="text-3xl font-bold text-[var(--cobalt-dark)]">
             {stats.player.name}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
@@ -123,28 +119,28 @@ export default function PlayerStats() {
           <ResponsiveContainer width="100%" height={160}>
             <AreaChart data={chartData} margin={{ top: 8, right: 4, left: -24, bottom: 0 }}>
               <defs>
-                <linearGradient id="areaGold" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={GOLD} stopOpacity={0.3} />
-                  <stop offset="100%" stopColor={GOLD} stopOpacity={0} />
+                <linearGradient id="areaCobalt" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={COBALT} stopOpacity={0.3} />
+                  <stop offset="100%" stopColor={COBALT} stopOpacity={0} />
                 </linearGradient>
               </defs>
               <XAxis dataKey="game" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
               <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
-              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(201,168,76,0.2)', strokeWidth: 1 }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ stroke: 'rgba(37,99,235,0.2)', strokeWidth: 1 }} />
               <ReferenceLine
                 y={avg}
-                stroke={GOLD_DIM}
+                stroke={COBALT_MID}
                 strokeDasharray="3 3"
-                label={{ value: `avg ${avg}`, fill: GOLD_DIM, fontSize: 9, position: 'right' }}
+                label={{ value: `avg ${avg}`, fill: COBALT_MID, fontSize: 9, position: 'right' }}
               />
               <Area
                 type="monotone"
                 dataKey="pts"
-                stroke={GOLD_BRIGHT}
+                stroke={COBALT_DARK}
                 strokeWidth={2}
-                fill="url(#areaGold)"
-                dot={{ fill: GOLD, strokeWidth: 0, r: 3 }}
-                activeDot={{ fill: GOLD_BRIGHT, r: 4, strokeWidth: 0 }}
+                fill="url(#areaCobalt)"
+                dot={{ fill: COBALT, strokeWidth: 0, r: 3 }}
+                activeDot={{ fill: COBALT_DARK, r: 4, strokeWidth: 0 }}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -156,17 +152,17 @@ export default function PlayerStats() {
         <div className="felt-card p-4">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Score range</p>
           <div className="flex items-center gap-3 text-xs">
-            <span className="text-[var(--gold-bright)] font-mono w-10 text-right">{stats.bestGame}</span>
-            <div className="flex-1 relative h-2 rounded-full bg-[rgba(201,168,76,0.1)] overflow-hidden">
+            <span className="text-[var(--cobalt-dark)] font-mono w-10 text-right">{stats.bestGame}</span>
+            <div className="flex-1 relative h-2 rounded-full bg-[rgba(37,99,235,0.1)] overflow-hidden">
               <div
                 className="absolute left-0 top-0 h-full rounded-full"
                 style={{
-                  background: `linear-gradient(to right, var(--gold-dim), var(--gold-bright))`,
+                  background: `linear-gradient(to right, var(--cobalt-mid), var(--cobalt-dark))`,
                   width: `${((avg - stats.bestGame) / (stats.worstGame - stats.bestGame)) * 100}%`,
                 }}
               />
               <div
-                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[var(--gold)] border-2 border-[hsl(var(--background))]"
+                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-[var(--cobalt)] border-2 border-[hsl(var(--background))]"
                 style={{
                   left: `calc(${((avg - stats.bestGame) / (stats.worstGame - stats.bestGame)) * 100}% - 6px)`,
                 }}
@@ -185,9 +181,9 @@ export default function PlayerStats() {
           <div className="space-y-2 stagger">
             {stats.recentGames.map(game => (
               <Link key={game.gameId} to={`/games/${game.gameId}/history`}>
-                <div className="felt-card px-4 py-3 flex items-center justify-between hover:border-[rgba(201,168,76,0.3)] transition-all duration-200 group fade-up">
+                <div className="felt-card px-4 py-3 flex items-center justify-between hover:border-[rgba(37,99,235,0.3)] transition-all duration-200 group fade-up">
                   <div>
-                    <p className="font-medium text-sm group-hover:text-[var(--gold)] transition-colors">
+                    <p className="font-medium text-sm group-hover:text-[var(--cobalt)] transition-colors">
                       {game.seasonName}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
@@ -197,7 +193,7 @@ export default function PlayerStats() {
                   </div>
                   <span
                     className="font-mono text-lg font-semibold"
-                    style={{ fontFamily: 'Cormorant Garamond, serif', color: 'var(--gold)' }}
+                    style={{ color: 'var(--cobalt)' }}
                   >
                     {game.totalPoints}
                   </span>

@@ -37,7 +37,7 @@ export default function Seasons() {
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">All time</p>
-          <h1 className="text-4xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
             Seasons
           </h1>
         </div>
@@ -51,20 +51,20 @@ export default function Seasons() {
 
       {isLoading && (
         <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-xl bg-[rgba(201,168,76,0.04)] animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-16 rounded-xl bg-accent animate-pulse" />)}
         </div>
       )}
 
       <div className="space-y-2 stagger">
         {seasons?.map(season => (
           <Link key={season.id} to={`/seasons/${season.id}`}>
-            <div className="felt-card px-5 py-4 flex items-center justify-between hover:border-[rgba(201,168,76,0.3)] transition-all duration-200 group fade-up">
+            <div className="felt-card px-5 py-4 flex items-center justify-between hover:border-[rgba(37,99,235,0.3)] transition-all duration-200 group fade-up">
               <div className="flex items-center gap-4">
-                <div className="w-8 h-8 rounded-full bg-[rgba(201,168,76,0.08)] flex items-center justify-center text-sm">
+                <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-sm">
                   🏆
                 </div>
                 <div>
-                  <p className="font-semibold group-hover:text-[var(--gold)] transition-colors">{season.name}</p>
+                  <p className="font-semibold group-hover:text-[var(--cobalt)] transition-colors">{season.name}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {season._count?.games || 0} games · {season._count?.players || 0} players
                   </p>
@@ -73,12 +73,12 @@ export default function Seasons() {
               <div className="flex items-center gap-2">
                 <span className={`text-xs px-2 py-0.5 rounded-full border ${
                   season.status === 'ACTIVE'
-                    ? 'border-[rgba(201,168,76,0.4)] text-[var(--gold)] bg-[rgba(201,168,76,0.08)]'
-                    : 'border-[rgba(255,255,255,0.08)] text-muted-foreground'
+                    ? 'border-[rgba(37,99,235,0.4)] text-[var(--cobalt)] bg-[rgba(37,99,235,0.08)]'
+                    : 'border-border text-muted-foreground'
                 }`}>
                   {season.status === 'ACTIVE' ? 'Active' : 'Closed'}
                 </span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-[var(--gold)] transition-colors" />
+                <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-[var(--cobalt)] transition-colors" />
               </div>
             </div>
           </Link>
@@ -93,9 +93,9 @@ export default function Seasons() {
 
       {isGroupAdmin && (
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="bg-[var(--felt-card)] border-[rgba(201,168,76,0.2)]">
+          <DialogContent className="bg-white border-[var(--border-color)]">
             <DialogHeader>
-              <DialogTitle style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '1.5rem' }}>
+              <DialogTitle style={{ fontSize: '1.5rem' }}>
                 New Season
               </DialogTitle>
             </DialogHeader>
@@ -110,7 +110,7 @@ export default function Seasons() {
                   onChange={e => setName(e.target.value)}
                   placeholder="e.g. Summer 2024"
                   required
-                  className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0"
+                  className="focus:border-[var(--cobalt)] focus:ring-0"
                 />
               </div>
               <DialogFooter>
