@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,35 +6,35 @@
 
 @layer base {
   :root {
-    --background: 24 15% 5%;
-    --foreground: 42 30% 92%;
-    --card: 24 12% 8%;
-    --card-foreground: 42 30% 92%;
-    --popover: 24 12% 8%;
-    --popover-foreground: 42 30% 92%;
-    --primary: 43 74% 55%;
-    --primary-foreground: 24 15% 5%;
-    --secondary: 24 10% 14%;
-    --secondary-foreground: 42 20% 75%;
-    --muted: 24 10% 12%;
-    --muted-foreground: 42 15% 50%;
-    --accent: 24 10% 16%;
-    --accent-foreground: 42 30% 92%;
+    --background: 220 25% 97%;
+    --foreground: 224 40% 18%;
+    --card: 0 0% 100%;
+    --card-foreground: 224 40% 18%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 40% 18%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 94%;
+    --secondary-foreground: 224 40% 18%;
+    --muted: 220 18% 92%;
+    --muted-foreground: 224 20% 50%;
+    --accent: 221 83% 96%;
+    --accent-foreground: 224 40% 18%;
     --destructive: 0 65% 48%;
-    --destructive-foreground: 42 30% 92%;
-    --border: 24 10% 14%;
-    --input: 24 10% 14%;
-    --ring: 43 74% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 20% 88%;
+    --input: 220 20% 88%;
+    --ring: 221 83% 53%;
     --radius: 0.75rem;
 
     /* Custom tokens */
-    --gold: #c9a84c;
-    --gold-bright: #e8c76a;
-    --gold-dim: #7a6230;
-    --felt: #0e1a13;
-    --felt-card: #111e16;
-    --cream: #f0e8d8;
-    --crimson: #8b1a2e;
+    --cobalt: #2563eb;
+    --cobalt-light: #eff3ff;
+    --cobalt-dark: #1e3a8a;
+    --cobalt-mid: #3b5cc4;
+    --text-primary: #1a2540;
+    --text-muted: #6b7a99;
+    --border-color: #dde3f0;
   }
 }
 
@@ -44,58 +44,47 @@
   }
 
   html {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Inter', sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    background-image:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(201,168,76,0.07) 0%, transparent 70%),
-      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Ccircle cx='30' cy='30' r='1' fill='rgba(201,168,76,0.04)'/%3E%3C/svg%3E");
     min-height: 100vh;
   }
 
   h1, h2, h3 {
-    font-family: 'Cormorant Garamond', serif;
-    letter-spacing: -0.01em;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer components {
-  /* Card with felt texture */
   .felt-card {
-    background: var(--felt-card);
-    border: 1px solid rgba(201, 168, 76, 0.12);
+    background: white;
+    border: 1px solid var(--border-color);
     border-radius: var(--radius);
   }
 
-  /* Gold shimmer text */
-  .text-gold {
-    color: var(--gold);
-  }
-  .text-gold-bright {
-    color: var(--gold-bright);
-  }
+  .text-gold { color: var(--cobalt); }
+  .text-gold-bright { color: var(--cobalt-dark); }
 
-  /* Stat number display */
   .stat-number {
-    font-family: 'Cormorant Garamond', serif;
+    font-family: 'DM Mono', monospace;
     font-weight: 600;
     letter-spacing: -0.02em;
-    color: var(--gold-bright);
+    color: var(--cobalt-dark);
   }
 
-  /* Subtle gold glow */
   .gold-glow {
-    box-shadow: 0 0 20px rgba(201, 168, 76, 0.15), 0 0 60px rgba(201, 168, 76, 0.05);
+    box-shadow: 0 0 20px rgba(37,99,235,0.12), 0 0 60px rgba(37,99,235,0.04);
   }
 
-  /* Tab-style badge */
   .rank-badge {
-    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
-    color: hsl(var(--background));
+    background: var(--cobalt-dark);
+    color: white;
     font-family: 'DM Mono', monospace;
     font-size: 0.7rem;
     font-weight: 500;
@@ -105,12 +94,11 @@
     text-align: center;
   }
 
-  /* Suit divider */
   .suit-divider {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    color: var(--gold-dim);
+    color: var(--text-muted);
     font-size: 0.75rem;
     letter-spacing: 0.15em;
     text-transform: uppercase;
@@ -120,24 +108,22 @@
     content: '';
     flex: 1;
     height: 1px;
-    background: linear-gradient(to right, transparent, rgba(201,168,76,0.25), transparent);
+    background: linear-gradient(to right, transparent, var(--border-color), transparent);
   }
 
-  /* Progress bar */
   .score-bar {
     height: 3px;
-    background: rgba(201, 168, 76, 0.15);
+    background: var(--cobalt-light);
     border-radius: 999px;
     overflow: hidden;
   }
   .score-bar-fill {
     height: 100%;
-    background: linear-gradient(to right, var(--gold-dim), var(--gold));
+    background: linear-gradient(to right, var(--cobalt-mid), var(--cobalt));
     border-radius: 999px;
     transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
-  /* Animated entry */
   .fade-up {
     animation: fadeUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
@@ -146,7 +132,6 @@
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* Stagger children */
   .stagger > *:nth-child(1) { animation-delay: 0ms; }
   .stagger > *:nth-child(2) { animation-delay: 60ms; }
   .stagger > *:nth-child(3) { animation-delay: 120ms; }
@@ -172,10 +157,10 @@ select {
 /* Recharts overrides */
 .recharts-cartesian-grid-horizontal line,
 .recharts-cartesian-grid-vertical line {
-  stroke: rgba(201, 168, 76, 0.08) !important;
+  stroke: var(--border-color) !important;
 }
 .recharts-text {
-  fill: rgba(240, 232, 216, 0.45) !important;
+  fill: var(--text-muted) !important;
   font-family: 'DM Mono', monospace !important;
   font-size: 11px !important;
 }
