@@ -14,12 +14,19 @@ model Admin {
   createdAt    DateTime @default(now())
 }
 
+enum Currency {
+  GBP
+  EUR
+  USD
+}
+
 model Group {
   id                 String         @id @default(uuid())
   name               String
   username           String         @unique
   passwordHash       String
   memberPasswordHash String?
+  currency           Currency       @default(EUR)
   createdAt          DateTime       @default(now())
   groupPlayers       GroupPlayer[]
   seasons            Season[]
@@ -59,9 +66,11 @@ model Season {
   name      String
   status    SeasonStatus   @default(ACTIVE)
   createdAt DateTime       @default(now())
-  closedAt  DateTime?
-  players   SeasonPlayer[]
-  games     Game[]
+  closedAt           DateTime?
+  potEnabled         Boolean  @default(false)
+  contributionAmount Decimal? @db.Decimal(10, 2)
+  players            SeasonPlayer[]
+  games              Game[]
 }
 
 enum SeasonStatus {
@@ -87,6 +96,7 @@ model Game {
   status    GameStatus   @default(IN_PROGRESS)
   createdAt DateTime     @default(now())
   closedAt  DateTime?
+  totalPot  Decimal?     @db.Decimal(10, 2)
   players   GamePlayer[]
   rounds    Round[]
 }
@@ -100,8 +110,9 @@ model GamePlayer {
   id       String @id @default(uuid())
   gameId   String
   game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  playerId String
-  player   Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  playerId   String
+  player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  potAwarded Decimal? @db.Decimal(10, 2)
 
   @@unique([gameId, playerId])
 }
