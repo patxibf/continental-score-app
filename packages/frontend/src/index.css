@@ -43,6 +43,11 @@
     @apply border-border;
   }
 
+  /* Prevent iOS Safari from auto-zooming on input focus (triggers when font-size < 16px) */
+  input, textarea, select {
+    font-size: 16px;
+  }
+
   html {
     font-family: 'DM Sans', sans-serif;
     -webkit-font-smoothing: antialiased;

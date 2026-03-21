@@ -50,31 +50,47 @@ function LiveScoreboard({ game, totals }: { game: GameType; totals: Record<strin
 }
 
 export function ScoreEntry({
-  game, roundNumber, onSubmit, isSubmitting,
+  game, roundNumber, onSubmit, isSubmitting, initialData, onCancel,
 }: {
   game: GameType; roundNumber: number
   onSubmit: (scores: { playerId: string; points: number; wentOut: boolean; wentOutInOneGo: boolean }[]) => void
   isSubmitting: boolean
+  initialData?: Round
+  onCancel?: () => void
 }) {
   const roundInfo = ROUNDS_INFO[roundNumber - 1]
   const isLastRound = roundNumber === 7
-  const [scores, setScores] = useState<Record<string, string>>(
-    Object.fromEntries(game.players.map(gp => [gp.playerId, ''])),
-  )
-  // null = no one out, string = went out (0 pts), string+'!' = went out in one go (negative pts)
-  const [wentOut, setWentOut] = useState<string | null>(null)
-  const [wentOutInOneGo, setWentOutInOneGo] = useState<string | null>(null)
+
+  const [scores, setScores] = useState<Record<string, string>>(() => {
+    if (!initialData) return Object.fromEntries(game.players.map(gp => [gp.playerId, '']))
+    return Object.fromEntries(
+      game.players.map(gp => {
+        const s = initialData.scores.find(s => s.playerId === gp.playerId)
+        if (!s || s.wentOut) return [gp.playerId, '']
+        return [gp.playerId, String(s.points)]
+      }),
+    )
+  })
+
+  const [wentOut, setWentOut] = useState<string | null>(() => {
+    if (!initialData) return null
+    const s = initialData.scores.find(s => s.wentOut && s.points >= 0)
+    return s?.playerId ?? null
+  })
+
+  const [wentOutInOneGo, setWentOutInOneGo] = useState<string | null>(() => {
+    if (!initialData) return null
+    const s = initialData.scores.find(s => s.wentOut && s.points < 0)
+    return s?.playerId ?? null
+  })
 
   const handlePlayerClick = (playerId: string) => {
     if (wentOutInOneGo === playerId) {
-      // cycle back: one-go → unselected
       setWentOut(null)
       setWentOutInOneGo(null)
     } else if (wentOut === playerId) {
-      // cycle: went out → went out in one go
       setWentOutInOneGo(playerId)
     } else {
-      // cycle: unselected → went out
       setWentOut(playerId)
       setWentOutInOneGo(null)
     }
@@ -85,7 +101,6 @@ export function ScoreEntry({
     const result = game.players.map(gp => {
       const isOut = wentOut === gp.playerId || wentOutInOneGo === gp.playerId
       const isOneGo = wentOutInOneGo === gp.playerId
-      // On round 7, default empty scores to 250
       const rawScore = scores[gp.playerId]
       const effectiveScore = isLastRound && rawScore === '' ? '250' : rawScore
       return {
@@ -111,7 +126,7 @@ export function ScoreEntry({
           <p className="text-xs text-muted-foreground">{roundInfo?.description} · {roundInfo?.cardsDealt} cards</p>
         </div>
         <span className="text-xs px-2 py-0.5 rounded-full border border-[rgba(201,168,76,0.3)] text-[var(--gold)] bg-[rgba(201,168,76,0.06)]">
-          Enter scores
+          {initialData ? 'Editing' : 'Enter scores'}
         </span>
       </div>
       <form onSubmit={handleSubmit} className="p-4 space-y-2">
@@ -152,7 +167,8 @@ export function ScoreEntry({
                   type="number"
                   min="0"
                   inputMode="numeric"
-                  className="w-20 text-center font-mono text-lg bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0 h-12"
+                  className="w-20 text-center font-mono bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0 h-12"
+                  style={{ fontSize: '16px' }}
                   value={scores[gp.playerId]}
                   onChange={e => setScores(prev => ({ ...prev, [gp.playerId]: e.target.value }))}
                   placeholder={isLastRound ? '250' : '0'}
@@ -169,9 +185,16 @@ export function ScoreEntry({
             </div>
           )
         })}
-        <Button type="submit" className="w-full mt-4 h-11" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : `Submit Round ${roundNumber}`}
-        </Button>
+        <div className="flex gap-2 mt-4">
+          {onCancel && (
+            <Button type="button" variant="outline" className="flex-1 h-11" onClick={onCancel} disabled={isSubmitting}>
+              Cancel
+            </Button>
+          )}
+          <Button type="submit" className="flex-1 h-11" disabled={isSubmitting}>
+            {isSubmitting ? 'Saving…' : initialData ? `Save Round ${roundNumber}` : `Submit Round ${roundNumber}`}
+          </Button>
+        </div>
       </form>
     </div>
   )
@@ -182,6 +205,7 @@ export default function GamePage() {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
+  const [editingRoundId, setEditingRoundId] = useState<string | null>(null)
 
   const { data: game, isLoading } = useQuery<GameType>({
     queryKey: ['game', id],
@@ -195,6 +219,17 @@ export default function GamePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['game', id] })
       toast({ title: 'Round saved!' })
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  })
+
+  const editRoundMutation = useMutation({
+    mutationFn: ({ roundId, scores }: { roundId: string; scores: { playerId: string; points: number; wentOut: boolean; wentOutInOneGo: boolean }[] }) =>
+      api.patch<Round>(`/rounds/${roundId}`, { scores }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['game', id] })
+      setEditingRoundId(null)
+      toast({ title: 'Round updated!' })
     },
     onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
   })
@@ -219,9 +254,19 @@ export default function GamePage() {
 
   return (
     <div className="space-y-4 fade-up">
-      {/* Header */}
+      {/* Header with breadcrumb */}
       <div className="flex items-center justify-between">
         <div>
+          <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <button
+              onClick={() => navigate(`/seasons/${game.seasonId}`)}
+              className="hover:text-[var(--gold)] transition-colors"
+            >
+              Season
+            </button>
+            <span>›</span>
+            <span>Game</span>
+          </nav>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">In progress</p>
           <h1 className="text-3xl font-bold text-[var(--gold)]" style={{ fontFamily: 'Cormorant Garamond, serif' }}>
             Game
@@ -284,23 +329,48 @@ export default function GamePage() {
           <div className="suit-divider text-xs my-4">Completed Rounds</div>
           <div className="space-y-2 stagger">
             {[...game.rounds].reverse().map(round => (
-              <div key={round.id} className="felt-card p-4 fade-up">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-sm font-semibold text-[var(--gold)]">Round {round.roundNumber}</span>
-                  <span className="text-xs text-muted-foreground">{ROUNDS_INFO[round.roundNumber - 1]?.description}</span>
-                </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {round.scores.map(score => (
-                    <div key={score.playerId} className="flex items-center gap-2 text-sm">
-                      <span>{AVATAR_EMOJIS[score.player.avatar] || '🎮'}</span>
-                      <span className="text-xs text-muted-foreground truncate flex-1">{score.player.name}</span>
-                      <span className="font-mono text-xs text-[var(--gold)] flex-shrink-0">
-                        {score.wentOut ? '0 🏆' : score.points}
-                      </span>
+              editingRoundId === round.id ? (
+                <ScoreEntry
+                  key={round.id}
+                  game={game}
+                  roundNumber={round.roundNumber}
+                  initialData={round}
+                  onSubmit={scores => editRoundMutation.mutate({ roundId: round.id, scores })}
+                  isSubmitting={editRoundMutation.isPending}
+                  onCancel={() => setEditingRoundId(null)}
+                />
+              ) : (
+                <div key={round.id} className="felt-card p-4 fade-up">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-semibold text-[var(--gold)]">Round {round.roundNumber}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">{ROUNDS_INFO[round.roundNumber - 1]?.description}</span>
+                      {game.status === 'IN_PROGRESS' && (
+                        <button
+                          onClick={() => setEditingRoundId(round.id)}
+                          className="text-xs text-muted-foreground hover:text-[var(--gold)] transition-colors px-1.5 py-0.5 rounded border border-transparent hover:border-[rgba(201,168,76,0.3)]"
+                          title="Edit round"
+                        >
+                          ✏️
+                        </button>
+                      )}
                     </div>
-                  ))}
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {round.scores.map(score => (
+                      <div key={score.playerId} className="flex items-center gap-2 text-sm">
+                        <span>{AVATAR_EMOJIS[score.player.avatar] || '🎮'}</span>
+                        <span className="text-xs text-muted-foreground truncate flex-1">{score.player.name}</span>
+                        <span className="font-mono text-xs text-[var(--gold)] flex-shrink-0">
+                          {score.wentOut
+                            ? score.points < 0 ? `${score.points} ⚡` : '0 🏆'
+                            : score.points}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )
             ))}
           </div>
         </div>
