@@ -296,6 +296,17 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         },
       })
 
+      // Accumulate pot earnings per player
+      const earnings: Record<string, number> = {}
+      for (const game of games) {
+        for (const gp of game.players) {
+          if (gp.potAwarded !== null && gp.potAwarded !== undefined) {
+            earnings[gp.playerId] = (earnings[gp.playerId] ?? 0)
+              + parseFloat(gp.potAwarded.toString())
+          }
+        }
+      }
+
       // Aggregate per player
       const playerStats: Record<string, {
         playerId: string
@@ -304,6 +315,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         totalPoints: number
         gamesPlayed: number
         wins: number
+        totalEarnings: number
       }> = {}
 
       for (const game of games) {
@@ -319,6 +331,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
               totalPoints: 0,
               gamesPlayed: 0,
               wins: 0,
+              totalEarnings: earnings[gp.playerId] ?? 0,
             }
           }
           playerStats[gp.playerId].gamesPlayed++
