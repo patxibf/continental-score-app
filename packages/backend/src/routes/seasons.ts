@@ -4,6 +4,12 @@ import { prisma } from '../lib/prisma.js'
 
 const createSeasonSchema = z.object({
   name: z.string().min(1).max(100),
+  potEnabled: z.boolean().default(false),
+  contributionAmount: z.number().optional(),
+})
+
+const updateSeasonSchema = z.object({
+  name: z.string().min(1).max(100),
 })
 
 const seasonRoutes: FastifyPluginAsync = async (fastify) => {
@@ -35,8 +41,30 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'Invalid request', details: body.error.flatten() })
       }
 
+      // Pot validation
+      if (body.data.potEnabled) {
+        const amt = body.data.contributionAmount
+        if (amt == null || amt <= 0) {
+          return reply.status(400).send({ error: 'contributionAmount is required and must be > 0 when potEnabled' })
+        }
+        if (amt > 9999.99) {
+          return reply.status(400).send({ error: 'contributionAmount must not exceed 9999.99' })
+        }
+        const parts = String(amt).split('.')
+        if (parts[1] && parts[1].length > 2) {
+          return reply.status(400).send({ error: 'contributionAmount must have at most 2 decimal places' })
+        }
+      }
+
       const season = await prisma.season.create({
-        data: { name: body.data.name, groupId },
+        data: {
+          name: body.data.name,
+          groupId,
+          potEnabled: body.data.potEnabled,
+          ...(body.data.potEnabled && body.data.contributionAmount != null
+            ? { contributionAmount: body.data.contributionAmount }
+            : {}),
+        },
       })
 
       return reply.status(201).send(season)
@@ -49,7 +77,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
-      const body = createSeasonSchema.safeParse(request.body)
+      const body = updateSeasonSchema.safeParse(request.body)
       if (!body.success) {
         return reply.status(400).send({ error: 'Invalid request', details: body.error.flatten() })
       }

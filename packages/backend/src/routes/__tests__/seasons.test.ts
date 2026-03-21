@@ -123,3 +123,112 @@ describe('POST /api/seasons — member access', () => {
     expect(res.statusCode).toBe(403)
   })
 })
+
+describe('POST /api/seasons — money pot validation', () => {
+  it('creates season with potEnabled and contributionAmount', async () => {
+    vi.mocked(prisma.season.findFirst).mockResolvedValue(null) // group ownership check
+    vi.mocked(prisma.season.create).mockResolvedValueOnce({
+      id: 's1', name: 'Spring', groupId: 'group-1', status: 'ACTIVE',
+      potEnabled: true, contributionAmount: '5.00', createdAt: new Date(), closedAt: null,
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons',
+      payload: { name: 'Spring', potEnabled: true, contributionAmount: 5 },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(201)
+    expect(res.json().potEnabled).toBe(true)
+    expect(res.json().contributionAmount).toBe('5.00')
+  })
+
+  it('returns 400 when potEnabled but no contributionAmount', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons',
+      payload: { name: 'Spring', potEnabled: true },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when potEnabled with amount 0', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons',
+      payload: { name: 'Spring', potEnabled: true, contributionAmount: 0 },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when contributionAmount has more than 2 decimal places', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons',
+      payload: { name: 'Spring', potEnabled: true, contributionAmount: 5.555 },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when contributionAmount exceeds 9999.99', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons',
+      payload: { name: 'Spring', potEnabled: true, contributionAmount: 10000 },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('creates season with pot disabled, contributionAmount null', async () => {
+    vi.mocked(prisma.season.create).mockResolvedValueOnce({
+      id: 's1', name: 'Spring', groupId: 'group-1', status: 'ACTIVE',
+      potEnabled: false, contributionAmount: null, createdAt: new Date(), closedAt: null,
+    } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons',
+      payload: { name: 'Spring', potEnabled: false },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(201)
+    expect(res.json().potEnabled).toBe(false)
+    expect(res.json().contributionAmount).toBeNull()
+  })
+})
+
+describe('PATCH /api/seasons/:id — potEnabled is immutable', () => {
+  it('ignores potEnabled in PATCH body and returns existing values', async () => {
+    vi.mocked(prisma.season.findFirst).mockResolvedValueOnce({
+      id: 's1', name: 'Spring', groupId: 'group-1', status: 'ACTIVE',
+      potEnabled: true, contributionAmount: '5.00', createdAt: new Date(), closedAt: null,
+    } as any)
+    vi.mocked(prisma.season.update).mockResolvedValueOnce({
+      id: 's1', name: 'New Name', groupId: 'group-1', status: 'ACTIVE',
+      potEnabled: true, contributionAmount: '5.00', createdAt: new Date(), closedAt: null,
+    } as any)
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/seasons/s1',
+      payload: { name: 'New Name', potEnabled: false },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(200)
+    // potEnabled should remain true (the update mock returns the original value)
+    expect(res.json().potEnabled).toBe(true)
+    // Verify only name was passed to prisma.season.update
+    expect(vi.mocked(prisma.season.update).mock.calls[0][0].data).toEqual({ name: 'New Name' })
+  })
+})
