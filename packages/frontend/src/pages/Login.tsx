@@ -18,8 +18,8 @@ export default function Login() {
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background atmosphere */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[var(--gold)] opacity-[0.04] blur-[120px]" />
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[var(--felt)] opacity-40 blur-[80px]" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full bg-[var(--cobalt-light)] opacity-[0.08] blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-[var(--cobalt-light)] opacity-10 blur-[80px]" />
       </div>
 
       <div className="w-full max-w-sm relative fade-up">
@@ -27,8 +27,7 @@ export default function Login() {
         <div className="text-center mb-10">
           <div className="text-6xl mb-4 select-none">🃏</div>
           <h1
-            className="text-5xl font-bold text-[var(--gold)] mb-1"
-            style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic' }}
+            className="text-5xl font-bold text-[var(--cobalt)] mb-1"
           >
             Continental
           </h1>
@@ -54,7 +53,7 @@ export default function Login() {
                 placeholder="your-group"
                 required
                 autoComplete="username"
-                className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0 placeholder:text-muted-foreground/40 h-11"
+                className="bg-[hsl(var(--secondary))] border-[var(--border-color)] focus:border-[var(--cobalt)] focus:ring-0 placeholder:text-muted-foreground/40 h-11"
               />
             </div>
             <div className="space-y-2">
@@ -69,7 +68,7 @@ export default function Login() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
-                className="bg-[rgba(255,255,255,0.04)] border-[rgba(201,168,76,0.2)] focus:border-[var(--gold)] focus:ring-0 h-11"
+                className="bg-[hsl(var(--secondary))] border-[var(--border-color)] focus:border-[var(--cobalt)] focus:ring-0 h-11"
               />
             </div>
 

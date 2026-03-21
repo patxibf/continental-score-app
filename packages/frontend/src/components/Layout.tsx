@@ -18,13 +18,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Top bar */}
-      <header className="sticky top-0 z-40 border-b border-[rgba(201,168,76,0.12)] bg-[hsl(var(--background))]/90 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-[rgba(37,99,235,0.12)] bg-[hsl(var(--background))]/90 backdrop-blur-md">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <Link to="/dashboard" className="flex items-center gap-2.5 group">
             <span className="text-xl">🃏</span>
             <span
-              className="hidden sm:block text-lg font-semibold tracking-wide text-[var(--gold)]"
-              style={{ fontFamily: 'Cormorant Garamond, serif' }}
+              className="hidden sm:block text-lg font-semibold tracking-wide text-[var(--cobalt)]"
             >
               Continental
             </span>
@@ -42,7 +41,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               variant="ghost"
               size="icon"
               onClick={() => logout()}
-              className="text-muted-foreground hover:text-[var(--gold)]"
+              className="text-muted-foreground hover:text-[var(--cobalt)]"
             >
               <LogOut className="h-4 w-4" />
             </Button>
@@ -57,7 +56,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Bottom nav — group users only */}
       {user?.role !== 'admin' && (
-        <nav className="sticky bottom-0 z-40 border-t border-[rgba(201,168,76,0.12)] bg-[hsl(var(--background))]/90 backdrop-blur-md">
+        <nav className="sticky bottom-0 z-40 border-t border-[rgba(37,99,235,0.12)] bg-[hsl(var(--background))]/90 backdrop-blur-md">
           <div className="max-w-2xl mx-auto flex">
             {navItems.map(({ to, label, icon: Icon }) => {
               const active = location.pathname.startsWith(to)
@@ -68,14 +67,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   className={cn(
                     'flex-1 flex flex-col items-center py-2.5 text-xs gap-1 transition-all duration-200',
                     active
-                      ? 'text-[var(--gold)]'
+                      ? 'text-[var(--cobalt)]'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
                   <Icon className={cn('h-5 w-5 transition-transform duration-200', active && 'scale-110')} />
                   <span className="font-medium">{label}</span>
                   {active && (
-                    <span className="absolute bottom-0 h-[2px] w-8 bg-[var(--gold)] rounded-t-full" />
+                    <span className="absolute bottom-0 h-[2px] w-8 bg-[var(--cobalt)] rounded-t-full" />
                   )}
                 </Link>
               )
