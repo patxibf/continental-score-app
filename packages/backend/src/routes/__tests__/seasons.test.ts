@@ -333,6 +333,26 @@ describe('GET /api/seasons/:id/standings — totalEarnings', () => {
     const p1 = standings.find((s: any) => s.playerId === 'p1')
     expect(p1.totalEarnings).toBe(0)
   })
+
+  it('returns no players in standings when no closed games exist', async () => {
+    vi.mocked(prisma.season.findFirst).mockResolvedValueOnce({
+      id: 's1', groupId: 'group-1', status: 'ACTIVE', name: 'Spring',
+      potEnabled: true, contributionAmount: '5.00',
+      createdAt: new Date(), closedAt: null,
+    } as any)
+
+    // No closed games
+    vi.mocked(prisma.game.findMany).mockResolvedValueOnce([] as any)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/seasons/s1/standings',
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toEqual([])
+  })
 })
 
 describe('POST /api/seasons/:id/close — pot settlement for in-progress games', () => {
