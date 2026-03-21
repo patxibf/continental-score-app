@@ -85,3 +85,61 @@ describe('POST /api/games/:id/close', () => {
     expect(res.json().status).toBe('CLOSED')
   })
 })
+
+describe('POST /api/seasons/:seasonId/games — totalPot', () => {
+  it('sets totalPot when season has pot enabled (3 players at £5)', async () => {
+    vi.mocked(prisma.season.findFirst).mockResolvedValueOnce({
+      id: 's1', groupId: 'group-1', status: 'ACTIVE',
+      potEnabled: true, contributionAmount: { toString: () => '5.00' },
+    } as any)
+    vi.mocked(prisma.groupPlayer.findMany).mockResolvedValueOnce([
+      { groupId: 'group-1', playerId: 'p1' },
+      { groupId: 'group-1', playerId: 'p2' },
+      { groupId: 'group-1', playerId: 'p3' },
+    ] as any)
+    vi.mocked(prisma.game.create).mockResolvedValueOnce({
+      id: 'game-1', seasonId: 's1', status: 'IN_PROGRESS',
+      totalPot: '15.00', players: [], createdAt: new Date(),
+    } as any)
+    vi.mocked(prisma.seasonPlayer.upsert).mockResolvedValue({} as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons/s1/games',
+      payload: { playerIds: ['p1', 'p2', 'p3'] },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(201)
+    // Verify totalPot was passed to prisma.game.create
+    const createCall = vi.mocked(prisma.game.create).mock.calls[0][0]
+    expect(Number(createCall.data.totalPot)).toBeCloseTo(15, 2)
+  })
+
+  it('leaves totalPot null when pot is disabled', async () => {
+    vi.mocked(prisma.season.findFirst).mockResolvedValueOnce({
+      id: 's1', groupId: 'group-1', status: 'ACTIVE',
+      potEnabled: false, contributionAmount: null,
+    } as any)
+    vi.mocked(prisma.groupPlayer.findMany).mockResolvedValueOnce([
+      { groupId: 'group-1', playerId: 'p1' },
+      { groupId: 'group-1', playerId: 'p2' },
+    ] as any)
+    vi.mocked(prisma.game.create).mockResolvedValueOnce({
+      id: 'game-1', seasonId: 's1', status: 'IN_PROGRESS',
+      totalPot: null, players: [], createdAt: new Date(),
+    } as any)
+    vi.mocked(prisma.seasonPlayer.upsert).mockResolvedValue({} as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/seasons/s1/games',
+      payload: { playerIds: ['p1', 'p2'] },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(201)
+    const createCall = vi.mocked(prisma.game.create).mock.calls[0][0]
+    expect(createCall.data.totalPot).toBeUndefined()
+  })
+})

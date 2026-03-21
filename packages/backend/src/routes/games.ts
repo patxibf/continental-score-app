@@ -60,9 +60,15 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'One or more players not found in group' })
       }
 
+      const totalPot =
+        season.potEnabled && season.contributionAmount != null
+          ? body.data.playerIds.length * parseFloat(season.contributionAmount.toString())
+          : undefined
+
       const game = await prisma.game.create({
         data: {
           seasonId,
+          ...(totalPot != null ? { totalPot } : {}),
           players: {
             create: body.data.playerIds.map(playerId => ({ playerId })),
           },
