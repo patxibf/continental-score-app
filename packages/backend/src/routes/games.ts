@@ -174,6 +174,15 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
           }
         }
 
+        if (Object.keys(playerTotals).length === 0) {
+          // No scores — close without settlement
+          const closed = await prisma.game.update({
+            where: { id },
+            data: { status: 'CLOSED', closedAt: new Date() },
+          })
+          return reply.status(200).send(closed)
+        }
+
         const minScore = Math.min(...Object.values(playerTotals))
         const winnerIds = Object.keys(playerTotals).filter(pid => playerTotals[pid] === minScore)
         const winnerCount = winnerIds.length
