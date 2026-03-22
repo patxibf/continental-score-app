@@ -25,3 +25,5 @@ export const AVATAR_EMOJIS: Record<string, string> = {
   owl: '🦉', lion: '🦁', tiger: '🐯', penguin: '🐧', dolphin: '🐬',
   elephant: '🐘', giraffe: '🦒', koala: '🐨', panda: '🐼', zebra: '🦓',
 }
+
+export const CURRENCY_SYMBOL: Record<string, string> = { GBP: '£', EUR: '€', USD: '$' }

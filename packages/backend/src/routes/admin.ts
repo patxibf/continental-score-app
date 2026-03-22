@@ -27,12 +27,14 @@ const createGroupSchema = z.object({
   name: z.string().min(1).max(100),
   password: z.string().min(6),
   memberPassword: z.string().min(6).optional(),
+  currency: z.enum(['GBP', 'EUR', 'USD']).optional(),
 })
 
 const updateGroupSchema = z.object({
   name: z.string().min(1).max(100).optional(),
   password: z.string().min(6).optional(),
   memberPassword: z.string().min(6).optional().nullable(),
+  currency: z.enum(['GBP', 'EUR', 'USD']).optional(),
 })
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
@@ -43,7 +45,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
       const groups = await prisma.group.findMany({
         select: {
           id: true, name: true, username: true, createdAt: true,
-          memberPasswordHash: true,
+          memberPasswordHash: true, currency: true,
         },
         orderBy: { createdAt: 'desc' },
       })
@@ -65,7 +67,7 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'Invalid request', details: body.error.flatten() })
       }
 
-      const { name, password, memberPassword } = body.data
+      const { name, password, memberPassword, currency } = body.data
       const username = await uniqueSlug(name)
       const passwordHash = await bcrypt.hash(password, 10)
       const memberPasswordHash = memberPassword
@@ -73,8 +75,12 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         : null
 
       const group = await prisma.group.create({
-        data: { name, username, passwordHash, ...(memberPasswordHash ? { memberPasswordHash } : {}) },
-        select: { id: true, name: true, username: true, createdAt: true },
+        data: {
+          name, username, passwordHash,
+          ...(memberPasswordHash ? { memberPasswordHash } : {}),
+          currency: currency ?? 'EUR',
+        },
+        select: { id: true, name: true, username: true, createdAt: true, currency: true },
       })
 
       return reply.status(201).send(group)
@@ -96,7 +102,9 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Group not found' })
       }
 
-      const data: { name?: string; passwordHash?: string; memberPasswordHash?: string | null } = {}
+      const data: {
+        name?: string; passwordHash?: string; memberPasswordHash?: string | null; currency?: 'GBP' | 'EUR' | 'USD'
+      } = {}
       if (body.data.name) data.name = body.data.name
       if (body.data.password) data.passwordHash = await bcrypt.hash(body.data.password, 10)
       if (body.data.memberPassword !== undefined) {
@@ -104,11 +112,12 @@ const adminRoutes: FastifyPluginAsync = async (fastify) => {
           ? await bcrypt.hash(body.data.memberPassword, 10)
           : null
       }
+      if (body.data.currency) data.currency = body.data.currency
 
       const updated = await prisma.group.update({
         where: { id },
         data,
-        select: { id: true, name: true, username: true, createdAt: true },
+        select: { id: true, name: true, username: true, createdAt: true, currency: true },
       })
 
       return reply.send(updated)

@@ -1,6 +1,6 @@
 # Continental Scorekeeper
 
-Full-stack web app for tracking scores in the Spanish card game Continental. Supports multiple groups, seasons, live in-progress games, standings, stats, and a Telegram bot.
+Full-stack web app for tracking scores in the Spanish card game Continental. Supports multiple groups, seasons, live in-progress games, standings, stats, a money pot system, and a Telegram bot.
 
 ## Stack
 
@@ -12,7 +12,7 @@ Full-stack web app for tracking scores in the Spanish card game Continental. Sup
 | Auth | JWT in httpOnly cookies |
 | Bot | Telegraf (Telegram) |
 | Monorepo | npm workspaces |
-| Tests | Vitest + React Testing Library (140 tests) |
+| Tests | Vitest + React Testing Library (185 tests) |
 | Infra | AWS CDK (ECS Fargate + RDS + S3/CloudFront) |
 
 ## Project Structure
@@ -115,6 +115,19 @@ Group → Season → Game → Round → RoundScore
 - A season has many games; multiple can be `IN_PROGRESS` simultaneously
 - A game has exactly 7 rounds; a game cannot be closed until all 7 are complete
 - Each round has one `RoundScore` per player (points + `wentOut` flag)
+- Groups have a configurable currency (GBP/EUR/USD, default EUR)
+- Seasons can optionally enable a **money pot**: each player contributes a fixed amount per game; the winner(s) collect the net gain
+
+### Money Pot
+
+When a season is created with `potEnabled: true` and a `contributionAmount`, the pot is active for all games in that season:
+
+- `totalPot` is computed on game creation: `playerCount × contributionAmount`
+- On game close, `potAwarded` is written to every `GamePlayer` row:
+  - Winner(s): `winnerShare − contribution` (net gain)
+  - Losers: `−contribution`
+  - Full-table tie: `0` for all (nobody wins or loses)
+- The **Earnings Leaderboard** on the season detail page aggregates `potAwarded` across all closed games and sorts players by net earnings
 
 ### Scoring
 
@@ -200,13 +213,13 @@ All routes require JWT cookie. Group routes enforce `requireGroup`; write operat
 
 ## Testing
 
-140 tests across 11 test files, 0 failures.
+185 tests across 11 test files, 0 failures.
 
 ```bash
 npm test
 ```
 
-### Backend (103 tests, 7 files)
+### Backend (133 tests, 7 files)
 
 Uses `buildApp()` (registers all routes with a test JWT secret) and a manual Prisma mock at `src/lib/__mocks__/prisma.ts`.
 
@@ -227,7 +240,7 @@ await app.inject({
 
 Test files: `auth`, `admin`, `rounds`, `seasons`, `stats`, `games` + `gameRules` unit tests.
 
-### Frontend (37 tests, 4 files)
+### Frontend (52 tests, 4 files)
 
 Uses `renderWithProviders()` which wraps components with `QueryClientProvider` + `MemoryRouter`. API calls are mocked with `vi.mock('@/lib/api')`.
 

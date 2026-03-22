@@ -18,6 +18,14 @@ export const prisma = {
     update: vi.fn(),
     updateMany: vi.fn(),
   },
+  gamePlayer: {
+    findFirst: vi.fn(),
+    update: vi.fn(),
+  },
+  groupPlayer: {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+  },
   round: {
     findFirst: vi.fn(),
     findMany: vi.fn(),
@@ -34,4 +42,14 @@ export const prisma = {
     create: vi.fn(),
     update: vi.fn(),
   },
+  seasonPlayer: {
+    upsert: vi.fn(),
+    findUnique: vi.fn(),
+    findFirst: vi.fn(),
+    create: vi.fn(),
+    delete: vi.fn(),
+  },
+  $transaction: vi.fn((ops: any) =>
+    Array.isArray(ops) ? Promise.all(ops) : ops(prisma),
+  ),
 }

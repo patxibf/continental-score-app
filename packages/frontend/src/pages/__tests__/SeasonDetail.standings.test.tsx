@@ -26,21 +26,38 @@ const mockSeason = {
   status: 'ACTIVE',
   groupId: 'g1',
   createdAt: '2026-01-01',
+  potEnabled: false,
+  contributionAmount: null,
   _count: { games: 2, players: 3 },
+}
+
+const mockSeasonWithPot = {
+  ...mockSeason,
+  potEnabled: true,
+  contributionAmount: '5.00',
 }
 
 // Alice: most wins (2), highest points (89)
 // Bob:   1 win, 67 pts
 // Carol: 0 wins, 45 pts  ← lowest points (wins the points ranking)
 const mockStandings = [
-  { playerId: 'p1', playerName: 'Alice', playerAvatar: 'cat', totalPoints: 89, gamesPlayed: 2, wins: 2 },
-  { playerId: 'p2', playerName: 'Bob',   playerAvatar: 'fox', totalPoints: 67, gamesPlayed: 2, wins: 1 },
-  { playerId: 'p3', playerName: 'Carol', playerAvatar: 'bear', totalPoints: 45, gamesPlayed: 2, wins: 0 },
+  { playerId: 'p1', playerName: 'Alice', playerAvatar: 'cat', totalPoints: 89, gamesPlayed: 2, wins: 2, totalEarnings: 0 },
+  { playerId: 'p2', playerName: 'Bob',   playerAvatar: 'fox', totalPoints: 67, gamesPlayed: 2, wins: 1, totalEarnings: 0 },
+  { playerId: 'p3', playerName: 'Carol', playerAvatar: 'bear', totalPoints: 45, gamesPlayed: 2, wins: 0, totalEarnings: 0 },
 ]
+
+const mockStandingsWithEarnings = [
+  { playerId: 'p1', playerName: 'Alice', playerAvatar: 'cat', totalPoints: 89, gamesPlayed: 2, wins: 2, totalEarnings: -5 },
+  { playerId: 'p2', playerName: 'Bob',   playerAvatar: 'fox', totalPoints: 67, gamesPlayed: 2, wins: 1, totalEarnings: 15 },
+  { playerId: 'p3', playerName: 'Carol', playerAvatar: 'bear', totalPoints: 45, gamesPlayed: 2, wins: 0, totalEarnings: 0 },
+]
+
+const mockUser = { id: 'u1', username: 'testuser', role: 'user', groupAccess: 'admin', currency: 'GBP' }
 
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(api.get).mockImplementation(async (path: string) => {
+    if (path === '/auth/me') return mockUser
     if (path === '/seasons') return [mockSeason]
     if (path === '/seasons/s1/standings') return mockStandings
     if (path === '/seasons/s1/games') return []
@@ -95,5 +112,68 @@ describe('SeasonDetail — standings toggle', () => {
 
     const rows = screen.getAllByText(/^(Alice|Bob|Carol)$/)
     expect(rows[0].textContent).toContain('Carol')
+  })
+})
+
+describe('SeasonDetail — Earnings Leaderboard', () => {
+  it('renders earnings leaderboard when potEnabled is true', async () => {
+    vi.mocked(api.get).mockImplementation(async (path: string) => {
+      if (path === '/auth/me') return mockUser
+      if (path === '/seasons') return [mockSeasonWithPot]
+      if (path === '/seasons/s1/standings') return mockStandings
+      if (path === '/seasons/s1/games') return []
+      return []
+    })
+
+    renderSeasonDetail()
+
+    await waitFor(() => expect(screen.getByText('Earnings')).toBeInTheDocument())
+    expect(screen.getByText('£5.00 per game')).toBeInTheDocument()
+
+    // Verify leaderboard appears before standings in the DOM
+    const earningsHeading = screen.getByText('Earnings')
+    const standingsHeading = screen.getByText(/standings/i)
+    expect(earningsHeading.compareDocumentPosition(standingsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // Node.DOCUMENT_POSITION_FOLLOWING means standingsHeading comes after earningsHeading
+  })
+
+  it('does not render earnings leaderboard when potEnabled is false', async () => {
+    renderSeasonDetail()
+
+    await waitFor(() => expect(screen.getByText('Carol')).toBeInTheDocument())
+    expect(screen.queryByText('Earnings')).not.toBeInTheDocument()
+  })
+
+  it('shows positive earnings in green, negative in red/muted, sorted descending', async () => {
+    vi.mocked(api.get).mockImplementation(async (path: string) => {
+      if (path === '/auth/me') return mockUser
+      if (path === '/seasons') return [mockSeasonWithPot]
+      if (path === '/seasons/s1/standings') return mockStandingsWithEarnings
+      if (path === '/seasons/s1/games') return []
+      return []
+    })
+
+    renderSeasonDetail()
+
+    await waitFor(() => expect(screen.getByText('Earnings')).toBeInTheDocument())
+
+    // Bob has +15, Alice has -5, Carol has 0 — Bob should appear first (descending by earnings)
+    const bobEarnings = screen.getByText('+£15.00')
+    const aliceEarnings = screen.getByText('-£5.00')
+    const carolEarnings = screen.getByText('£0.00')
+
+    // Check order using DOM position: Bob before Carol before Alice
+    const allEarnings = [bobEarnings, carolEarnings, aliceEarnings]
+    for (let i = 0; i < allEarnings.length - 1; i++) {
+      expect(
+        allEarnings[i].compareDocumentPosition(allEarnings[i + 1]) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy()
+    }
+
+    // Bob's earnings shown as +£15.00 with green styling
+    expect(bobEarnings).toHaveClass('text-green-600')
+
+    // Alice's earnings shown as -£5.00 with muted styling
+    expect(aliceEarnings).toHaveClass('text-muted-foreground')
   })
 })

@@ -1,8 +1,15 @@
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
+import { TOTAL_ROUNDS } from '../lib/gameRules.js'
 
 const createSeasonSchema = z.object({
+  name: z.string().min(1).max(100),
+  potEnabled: z.boolean().default(false),
+  contributionAmount: z.number().optional(),
+})
+
+const updateSeasonSchema = z.object({
   name: z.string().min(1).max(100),
 })
 
@@ -35,8 +42,29 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'Invalid request', details: body.error.flatten() })
       }
 
+      // Pot validation
+      if (body.data.potEnabled) {
+        const amt = body.data.contributionAmount
+        if (amt == null || amt <= 0) {
+          return reply.status(400).send({ error: 'contributionAmount is required and must be > 0 when potEnabled' })
+        }
+        if (amt > 9999.99) {
+          return reply.status(400).send({ error: 'contributionAmount must not exceed 9999.99' })
+        }
+        if (Number(amt.toFixed(2)) !== amt) {
+          return reply.status(400).send({ error: 'contributionAmount must have at most 2 decimal places' })
+        }
+      }
+
       const season = await prisma.season.create({
-        data: { name: body.data.name, groupId },
+        data: {
+          name: body.data.name,
+          groupId,
+          potEnabled: body.data.potEnabled,
+          ...(body.data.potEnabled && body.data.contributionAmount != null
+            ? { contributionAmount: body.data.contributionAmount }
+            : {}),
+        },
       })
 
       return reply.status(201).send(season)
@@ -49,7 +77,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
     async (request, reply) => {
       const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
-      const body = createSeasonSchema.safeParse(request.body)
+      const body = updateSeasonSchema.safeParse(request.body)
       if (!body.success) {
         return reply.status(400).send({ error: 'Invalid request', details: body.error.flatten() })
       }
@@ -83,11 +111,69 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(400).send({ error: 'Season already closed' })
       }
 
-      // Close all in-progress games first
-      await prisma.game.updateMany({
+      // Close all in-progress games with per-game pot settlement
+      const inProgressGames = await prisma.game.findMany({
         where: { seasonId: id, status: 'IN_PROGRESS' },
-        data: { status: 'CLOSED', closedAt: new Date() },
+        include: {
+          rounds: { include: { scores: true } },
+          players: { include: { player: true } },
+          season: { select: { contributionAmount: true, potEnabled: true } },
+        },
       })
+
+      for (const game of inProgressGames) {
+        const hasAllRounds = game.rounds.length === TOTAL_ROUNDS
+
+        if (game.totalPot != null && game.season?.contributionAmount != null && hasAllRounds) {
+          try {
+            const contribution = parseFloat(game.season.contributionAmount.toString())
+            const totalPot = parseFloat(game.totalPot.toString())
+
+            const playerTotals: Record<string, number> = {}
+            for (const round of game.rounds) {
+              for (const score of round.scores) {
+                playerTotals[score.playerId] = (playerTotals[score.playerId] ?? 0) + score.points
+              }
+            }
+
+            if (Object.keys(playerTotals).length === 0) {
+              // No scores yet — close without settlement
+              await prisma.game.update({
+                where: { id: game.id },
+                data: { status: 'CLOSED', closedAt: new Date() },
+              })
+            } else {
+              const minScore = Math.min(...Object.values(playerTotals))
+              const winnerIds = Object.keys(playerTotals).filter(pid => playerTotals[pid] === minScore)
+              const winnerCount = winnerIds.length
+              const winnerShare = Math.floor((totalPot / winnerCount) * 100) / 100
+
+              const potUpdates = game.players.map(gp => {
+                const isWinner = winnerIds.includes(gp.playerId)
+                const potAwarded = isWinner ? winnerShare - contribution : -contribution
+                return prisma.gamePlayer.update({
+                  where: { gameId_playerId: { gameId: game.id, playerId: gp.playerId } },
+                  data: { potAwarded },
+                })
+              })
+
+              const closeUpdate = prisma.game.update({
+                where: { id: game.id },
+                data: { status: 'CLOSED', closedAt: new Date() },
+              })
+
+              await prisma.$transaction([...potUpdates, closeUpdate])
+            }
+          } catch (e) {
+            console.error(`Failed to settle pot for game ${game.id}`, e)
+          }
+        } else {
+          await prisma.game.update({
+            where: { id: game.id },
+            data: { status: 'CLOSED', closedAt: new Date() },
+          })
+        }
+      }
 
       const updated = await prisma.season.update({
         where: { id },
@@ -218,6 +304,17 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         },
       })
 
+      // Accumulate pot earnings per player
+      const earnings: Record<string, number> = {}
+      for (const game of games) {
+        for (const gp of game.players) {
+          if (gp.potAwarded !== null && gp.potAwarded !== undefined) {
+            earnings[gp.playerId] = (earnings[gp.playerId] ?? 0)
+              + parseFloat(gp.potAwarded.toString())
+          }
+        }
+      }
+
       // Aggregate per player
       const playerStats: Record<string, {
         playerId: string
@@ -226,6 +323,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         totalPoints: number
         gamesPlayed: number
         wins: number
+        totalEarnings: number
       }> = {}
 
       for (const game of games) {
@@ -241,6 +339,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
               totalPoints: 0,
               gamesPlayed: 0,
               wins: 0,
+              totalEarnings: earnings[gp.playerId] ?? 0,
             }
           }
           playerStats[gp.playerId].gamesPlayed++

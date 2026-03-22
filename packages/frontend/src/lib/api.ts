@@ -43,6 +43,7 @@ export interface AuthUser {
   groupId?: string
   groupName?: string
   username?: string
+  currency?: 'GBP' | 'EUR' | 'USD'
 }
 
 export interface Player {
@@ -63,6 +64,8 @@ export interface Season {
   createdAt: string
   closedAt?: string | null
   _count?: { games: number; players: number }
+  potEnabled: boolean
+  contributionAmount?: string | null
 }
 
 export interface Game {
@@ -76,6 +79,7 @@ export interface Game {
   rounds?: Round[]
   totals?: Record<string, number>
   _count?: { rounds: number }
+  totalPot?: string | null
 }
 
 export interface GamePlayer {
@@ -83,6 +87,7 @@ export interface GamePlayer {
   gameId: string
   playerId: string
   player: Pick<Player, 'id' | 'name' | 'avatar'>
+  potAwarded?: string | null
 }
 
 export interface Round {
@@ -113,6 +118,7 @@ export interface Standing {
   winRate?: number
   bestGame?: number | null
   worstGame?: number | null
+  totalEarnings: number
 }
 
 export interface Group {
@@ -121,6 +127,7 @@ export interface Group {
   username: string
   createdAt: string
   hasMemberPassword?: boolean
+  currency: 'GBP' | 'EUR' | 'USD'
 }
 
 export interface AllTimePlayer {
