@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { api, Season, Game, Standing } from '@/lib/api'
-import { AVATAR_EMOJIS } from '@/lib/utils'
+import { AVATAR_EMOJIS, CURRENCY_SYMBOL } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
@@ -12,7 +12,8 @@ import { Plus, ChevronRight, Lock, Trophy, Star } from 'lucide-react'
 export default function SeasonDetail() {
   const { id } = useParams<{ id: string }>()
   const queryClient = useQueryClient()
-  const { isGroupAdmin } = useAuth()
+  const { isGroupAdmin, user } = useAuth()
+  const currencySymbol = CURRENCY_SYMBOL[user?.currency ?? 'EUR'] ?? '€'
   const [closeDialogOpen, setCloseDialogOpen] = useState(false)
   const [standingsSort, setStandingsSort] = useState<'points' | 'wins'>('points')
 
@@ -97,6 +98,47 @@ export default function SeasonDetail() {
             New Game
           </Button>
         </Link>
+      )}
+
+      {/* Earnings Leaderboard */}
+      {season.potEnabled && standings && standings.length > 0 && (
+        <div className="space-y-4">
+          <div>
+            <h2 className="text-2xl font-bold text-[var(--cobalt-dark)]">Earnings</h2>
+            {season.contributionAmount && (
+              <p className="text-sm text-muted-foreground">
+                {currencySymbol}{parseFloat(season.contributionAmount).toFixed(2)} per game
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            {[...standings]
+              .sort((a, b) => b.totalEarnings - a.totalEarnings)
+              .map((s, idx) => {
+                const earnings = s.totalEarnings
+                const isPositive = earnings > 0
+                const isNegative = earnings < 0
+                const formatted = `${isPositive ? '+' : isNegative ? '-' : ''}${currencySymbol}${Math.abs(earnings).toFixed(2)}`
+
+                return (
+                  <div key={s.playerId} className="felt-card p-4 flex items-center gap-4">
+                    <div className="w-8 text-center flex-shrink-0">
+                      <span className="text-xs font-mono text-muted-foreground">{idx + 1}</span>
+                    </div>
+                    <span className="text-2xl flex-shrink-0">{AVATAR_EMOJIS[s.playerAvatar] || '🎮'}</span>
+                    <div className="flex-1">
+                      <span className="font-semibold text-sm">{s.playerName}</span>
+                    </div>
+                    <span className={`font-mono text-sm font-semibold ${
+                      isPositive ? 'text-green-600' : isNegative ? 'text-muted-foreground' : ''
+                    }`}>
+                      {formatted}
+                    </span>
+                  </div>
+                )
+              })}
+          </div>
+        </div>
       )}
 
       {/* Standings */}
