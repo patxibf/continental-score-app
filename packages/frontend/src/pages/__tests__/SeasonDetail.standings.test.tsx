@@ -129,6 +129,12 @@ describe('SeasonDetail — Earnings Leaderboard', () => {
 
     await waitFor(() => expect(screen.getByText('Earnings')).toBeInTheDocument())
     expect(screen.getByText('£5.00 per game')).toBeInTheDocument()
+
+    // Verify leaderboard appears before standings in the DOM
+    const earningsHeading = screen.getByText('Earnings')
+    const standingsHeading = screen.getByText(/standings/i)
+    expect(earningsHeading.compareDocumentPosition(standingsHeading) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    // Node.DOCUMENT_POSITION_FOLLOWING means standingsHeading comes after earningsHeading
   })
 
   it('does not render earnings leaderboard when potEnabled is false', async () => {
