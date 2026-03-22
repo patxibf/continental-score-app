@@ -87,3 +87,22 @@ describe('Admin — currency selector in new group dialog', () => {
     })
   })
 })
+
+describe('Admin — currency selector in edit group dialog', () => {
+  it('pre-populates the currency selector with the group stored currency when opening edit dialog', async () => {
+    renderAdmin()
+
+    await waitFor(() => expect(screen.getByText('Card Club')).toBeInTheDocument())
+
+    // The edit (pencil) buttons are icon-only and have no accessible name.
+    // getAllByRole('button') returns: [New, pencil-g1, trash-g1, pencil-g2, trash-g2].
+    // Index 3 is the pencil button for Card Club (g2), which has currency: 'GBP'.
+    const allButtons = screen.getAllByRole('button')
+    fireEvent.click(allButtons[3])
+
+    await waitFor(() => expect(screen.getByLabelText(/currency/i)).toBeInTheDocument())
+
+    const select = screen.getByLabelText(/currency/i) as HTMLSelectElement
+    expect(select.value).toBe('GBP')
+  })
+})
