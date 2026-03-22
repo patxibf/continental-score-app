@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
+import { CURRENCY_SYMBOL } from '@/lib/utils'
 
 function toSlugPreview(name: string): string {
   return name
@@ -27,12 +28,14 @@ function GroupDialog({
   const [name, setName] = useState(group?.name || '')
   const [password, setPassword] = useState('')
   const [memberPassword, setMemberPassword] = useState('')
+  const [currency, setCurrency] = useState<'GBP' | 'EUR' | 'USD'>(group?.currency ?? 'EUR')
 
   useEffect(() => {
     if (open) {
       setName(group?.name || '')
       setPassword('')
       setMemberPassword('')
+      setCurrency(group?.currency ?? 'EUR')
     }
   }, [open, group])
 
@@ -61,6 +64,7 @@ function GroupDialog({
     const payload: Record<string, string> = { name }
     if (password) payload.password = password
     if (memberPassword) payload.memberPassword = memberPassword
+    payload.currency = currency
     mutation.mutate(payload)
   }
 
@@ -92,6 +96,21 @@ function GroupDialog({
             {group && (
               <p className="text-xs text-muted-foreground">Login handle: @{group.username}</p>
             )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="currency" className="text-xs uppercase tracking-widest text-muted-foreground">
+              Currency
+            </Label>
+            <select
+              id="currency"
+              value={currency}
+              onChange={e => setCurrency(e.target.value as 'GBP' | 'EUR' | 'USD')}
+              className="w-full rounded-md border border-[var(--border-color)] bg-[hsl(var(--secondary))] px-3 py-2 text-sm focus:border-[var(--cobalt)] focus:outline-none"
+            >
+              <option value="EUR">€ EUR</option>
+              <option value="GBP">£ GBP</option>
+              <option value="USD">$ USD</option>
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="group-password" className="text-xs uppercase tracking-widest text-muted-foreground">
@@ -185,6 +204,9 @@ export default function Admin() {
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-sm">{group.name}</p>
+                  <span className="text-xs text-muted-foreground border border-[var(--border-color)] rounded px-1.5 py-0.5 leading-none">
+                    {CURRENCY_SYMBOL[group.currency] || group.currency}
+                  </span>
                   {group.hasMemberPassword && (
                     <span className="text-xs text-muted-foreground border border-[var(--border-color)] rounded px-1.5 py-0.5 leading-none">
                       Members enabled
