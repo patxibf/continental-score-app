@@ -131,9 +131,9 @@ describe('POST /api/games/:id/close — pot settlement', () => {
     const updateCalls = vi.mocked(prisma.gamePlayer.update).mock.calls
     expect(updateCalls).toHaveLength(3)
 
-    const p1Call = updateCalls.find(c => c[0].where.gameId_playerId.playerId === 'p1')
-    const p2Call = updateCalls.find(c => c[0].where.gameId_playerId.playerId === 'p2')
-    const p3Call = updateCalls.find(c => c[0].where.gameId_playerId.playerId === 'p3')
+    const p1Call = updateCalls.find(c => c[0].where.gameId_playerId?.playerId === 'p1')
+    const p2Call = updateCalls.find(c => c[0].where.gameId_playerId?.playerId === 'p2')
+    const p3Call = updateCalls.find(c => c[0].where.gameId_playerId?.playerId === 'p3')
 
     expect(p1Call![0].data.potAwarded).toBeCloseTo(10, 2)  // 15 - 5 = 10
     expect(p2Call![0].data.potAwarded).toBeCloseTo(-5, 2)
@@ -167,9 +167,9 @@ describe('POST /api/games/:id/close — pot settlement', () => {
 
     expect(res.statusCode).toBe(200)
     const updateCalls = vi.mocked(prisma.gamePlayer.update).mock.calls
-    const p1 = updateCalls.find(c => c[0].where.gameId_playerId.playerId === 'p1')
-    const p2 = updateCalls.find(c => c[0].where.gameId_playerId.playerId === 'p2')
-    const p3 = updateCalls.find(c => c[0].where.gameId_playerId.playerId === 'p3')
+    const p1 = updateCalls.find(c => c[0].where.gameId_playerId?.playerId === 'p1')
+    const p2 = updateCalls.find(c => c[0].where.gameId_playerId?.playerId === 'p2')
+    const p3 = updateCalls.find(c => c[0].where.gameId_playerId?.playerId === 'p3')
     expect(p1![0].data.potAwarded).toBeCloseTo(2.5, 2)
     expect(p2![0].data.potAwarded).toBeCloseTo(2.5, 2)
     expect(p3![0].data.potAwarded).toBeCloseTo(-5, 2)
@@ -245,8 +245,8 @@ describe('POST /api/games/:id/close — pot settlement', () => {
     const updateCalls = vi.mocked(prisma.gamePlayer.update).mock.calls
     expect(updateCalls).toHaveLength(4)
 
-    const winner = updateCalls.find(c => c[0].where.gameId_playerId.playerId === 'p1')
-    const loser = updateCalls.find(c => c[0].where.gameId_playerId.playerId === 'p4')
+    const winner = updateCalls.find(c => c[0].where.gameId_playerId?.playerId === 'p1')
+    const loser = updateCalls.find(c => c[0].where.gameId_playerId?.playerId === 'p4')
     // winnerShare = Math.floor(20/3 * 100) / 100 = 6.66
     expect(winner![0].data.potAwarded).toBeCloseTo(1.66, 2)  // 6.66 - 5
     expect(loser![0].data.potAwarded).toBeCloseTo(-5, 2)
