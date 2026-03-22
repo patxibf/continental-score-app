@@ -61,10 +61,12 @@ export default function Stats() {
   if (isLoading) {
     return (
       <div className="space-y-6 fade-up">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
-        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
-          Statistics
-        </h1>
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+            Statistics
+          </h1>
+        </div>
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
             <div key={i} className="h-20 rounded-xl bg-accent animate-pulse" />
@@ -77,10 +79,12 @@ export default function Stats() {
   if (!leaderboard || leaderboard.length === 0) {
     return (
       <div className="space-y-6 fade-up">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
-        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
-          Statistics
-        </h1>
+        <div>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
+          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+            Statistics
+          </h1>
+        </div>
         <div className="felt-card p-12 text-center">
           <p className="text-5xl mb-4">🎴</p>
           <p className="text-muted-foreground">No stats yet — play some games first!</p>
@@ -103,7 +107,7 @@ export default function Stats() {
   }))
 
   return (
-    <div className="space-y-8 fade-up">
+    <div className="space-y-6 fade-up">
       <div>
         <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
         <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
