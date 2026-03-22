@@ -88,4 +88,46 @@ describe('New Season dialog — Money Pot', () => {
     const submitButton = screen.getByRole('button', { name: /create season/i })
     expect(submitButton).toBeDisabled()
   })
+
+  it('submit is disabled when pot enabled and amount is invalid (zero or >2dp)', async () => {
+    renderSeasons()
+
+    await waitFor(() => expect(screen.getByText('Spring 2026')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: /new/i }))
+
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: /money pot/i })).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /money pot/i }))
+
+    await waitFor(() => expect(screen.getByLabelText(/contribution amount/i)).toBeInTheDocument())
+
+    fireEvent.change(screen.getByLabelText(/contribution amount/i), { target: { value: '0' } })
+
+    const submitButton = screen.getByRole('button', { name: /create season/i })
+    expect(submitButton).toBeDisabled()
+
+    fireEvent.change(screen.getByLabelText(/contribution amount/i), { target: { value: '1.999' } })
+    expect(submitButton).toBeDisabled()
+  })
+
+  it('shows validation error when amount is invalid', async () => {
+    renderSeasons()
+
+    await waitFor(() => expect(screen.getByText('Spring 2026')).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: /new/i }))
+
+    await waitFor(() => expect(screen.getByRole('checkbox', { name: /money pot/i })).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /money pot/i }))
+
+    await waitFor(() => expect(screen.getByLabelText(/contribution amount/i)).toBeInTheDocument())
+
+    fireEvent.change(screen.getByLabelText(/contribution amount/i), { target: { value: '0' } })
+
+    await waitFor(() =>
+      expect(screen.getByText('Amount must be greater than 0 with at most 2 decimal places.')).toBeInTheDocument()
+    )
+  })
 })
