@@ -53,7 +53,7 @@ export default function Seasons() {
       <div className="flex items-end justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">All time</p>
-          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
             Seasons
           </h1>
         </div>

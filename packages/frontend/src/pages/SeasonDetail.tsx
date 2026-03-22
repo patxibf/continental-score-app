@@ -69,7 +69,7 @@ export default function SeasonDetail() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
-          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
             {season.name}
           </h1>
           <span className={`inline-block mt-2 text-xs px-2 py-0.5 rounded-full border ${

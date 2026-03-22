@@ -108,7 +108,7 @@ export default function PlayerStats() {
           </div>
         </div>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-[var(--cobalt-dark)]">
+          <h1 className="text-3xl font-bold text-[var(--cobalt)]">
             {stats.player.name}
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">

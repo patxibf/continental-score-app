@@ -38,7 +38,7 @@ export default function Dashboard() {
       {/* Header */}
       <div>
         <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Welcome back</p>
-        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+        <h1 className="text-4xl font-bold text-[var(--cobalt)]">
           {user?.groupName || 'Dashboard'}
         </h1>
       </div>

@@ -50,7 +50,7 @@ export default function NewGame() {
     <div className="space-y-6 fade-up">
       <div>
         <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Let's play</p>
-        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+        <h1 className="text-4xl font-bold text-[var(--cobalt)]">
           New Game
         </h1>
         <p className="text-sm text-muted-foreground mt-1">Select 2–8 players</p>

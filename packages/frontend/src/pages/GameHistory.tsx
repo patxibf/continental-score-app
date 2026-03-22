@@ -99,7 +99,7 @@ export default function GameHistory() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Final Results</p>
-          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
             Game Over
           </h1>
           <p className="text-sm text-muted-foreground mt-1">

@@ -63,7 +63,7 @@ export default function Stats() {
       <div className="space-y-6 fade-up">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
-          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
             Statistics
           </h1>
         </div>
@@ -81,7 +81,7 @@ export default function Stats() {
       <div className="space-y-6 fade-up">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
-          <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+          <h1 className="text-4xl font-bold text-[var(--cobalt)]">
             Statistics
           </h1>
         </div>
@@ -110,7 +110,7 @@ export default function Stats() {
     <div className="space-y-6 fade-up">
       <div>
         <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Season</p>
-        <h1 className="text-4xl font-bold text-[var(--cobalt-dark)]">
+        <h1 className="text-4xl font-bold text-[var(--cobalt)]">
           Statistics
         </h1>
         <div className="flex items-center justify-between mt-1">
