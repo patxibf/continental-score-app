@@ -45,7 +45,7 @@ export default function Dashboard() {
 
       {/* Live game banners */}
       {inProgressGames.map(game => (
-        <Link key={game.id} to={`/games/${game.id}`}>
+        <Link key={game.id} to={`/games/${game.id}`} className="block">
           <div className="relative overflow-hidden rounded-xl border border-[rgba(37,99,235,0.35)] bg-white p-5 gold-glow transition-all duration-300 hover:border-[rgba(37,99,235,0.55)]">
             {/* Background glow */}
             <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--cobalt)] opacity-[0.04] rounded-full blur-2xl pointer-events-none" />

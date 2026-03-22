@@ -92,7 +92,7 @@ export default function SeasonDetail() {
 
       {/* New game button */}
       {season.status === 'ACTIVE' && isGroupAdmin && (
-        <Link to={`/seasons/${id}/games/new`}>
+        <Link to={`/seasons/${id}/games/new`} className="block">
           <Button className="w-full gap-2 h-11">
             <Plus className="h-4 w-4" />
             New Game
