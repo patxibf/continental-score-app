@@ -68,6 +68,8 @@ describe('New Season dialog — Money Pot', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: /money pot/i }))
 
     await waitFor(() => expect(screen.getByLabelText(/contribution amount/i)).toBeInTheDocument())
+
+    expect(screen.getByText('€')).toBeInTheDocument()
   })
 
   it('submit is disabled when pot enabled and amount is empty', async () => {
