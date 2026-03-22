@@ -220,6 +220,7 @@ export default function Admin() {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label={`Edit ${group.name}`}
                 className="h-8 w-8 text-muted-foreground hover:text-[var(--cobalt)]"
                 onClick={() => { setEditingGroup(group); setDialogOpen(true) }}
               >
@@ -228,6 +229,7 @@ export default function Admin() {
               <Button
                 variant="ghost"
                 size="icon"
+                aria-label={`Delete ${group.name}`}
                 className="h-8 w-8 text-muted-foreground hover:text-destructive"
                 onClick={() => {
                   if (confirm(`Delete "${group.name}"? This cannot be undone.`)) {

@@ -94,11 +94,7 @@ describe('Admin — currency selector in edit group dialog', () => {
 
     await waitFor(() => expect(screen.getByText('Card Club')).toBeInTheDocument())
 
-    // The edit (pencil) buttons are icon-only and have no accessible name.
-    // getAllByRole('button') returns: [New, pencil-g1, trash-g1, pencil-g2, trash-g2].
-    // Index 3 is the pencil button for Card Club (g2), which has currency: 'GBP'.
-    const allButtons = screen.getAllByRole('button')
-    fireEvent.click(allButtons[3])
+    fireEvent.click(screen.getByRole('button', { name: /edit card club/i }))
 
     await waitFor(() => expect(screen.getByLabelText(/currency/i)).toBeInTheDocument())
 
