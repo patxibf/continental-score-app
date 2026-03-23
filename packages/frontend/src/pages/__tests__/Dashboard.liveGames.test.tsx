@@ -44,7 +44,7 @@ function renderDashboard() {
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(api.get).mockImplementation(async (path: string) => {
-    if (path === '/auth/me') return { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup' }
+    if (path === '/auth/me') return { role: 'user', groupRole: 'owner', groupId: 'g1', groupName: 'TestGroup', groupSlug: 'testgroup', email: 'test@example.com', emailVerified: true }
     if (path === '/seasons') return [activeSeason]
     if (path === '/seasons/s1/games') return []
     if (path === '/seasons/s1/standings') return []
@@ -62,7 +62,7 @@ describe('Dashboard — live games', () => {
 
   it('shows one banner for a single in-progress game', async () => {
     vi.mocked(api.get).mockImplementation(async (path: string) => {
-      if (path === '/auth/me') return { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup' }
+      if (path === '/auth/me') return { role: 'user', groupRole: 'owner', groupId: 'g1', groupName: 'TestGroup', groupSlug: 'testgroup', email: 'test@example.com', emailVerified: true }
       if (path === '/seasons') return [activeSeason]
       if (path === '/seasons/s1/games') return [makeInProgressGame('game-1')]
       if (path === '/seasons/s1/standings') return []
@@ -76,7 +76,7 @@ describe('Dashboard — live games', () => {
 
   it('shows two banners when two games are simultaneously in-progress', async () => {
     vi.mocked(api.get).mockImplementation(async (path: string) => {
-      if (path === '/auth/me') return { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup' }
+      if (path === '/auth/me') return { role: 'user', groupRole: 'owner', groupId: 'g1', groupName: 'TestGroup', groupSlug: 'testgroup', email: 'test@example.com', emailVerified: true }
       if (path === '/seasons') return [activeSeason]
       if (path === '/seasons/s1/games') return [makeInProgressGame('game-1'), makeInProgressGame('game-2')]
       if (path === '/seasons/s1/standings') return []
@@ -90,7 +90,7 @@ describe('Dashboard — live games', () => {
 
   it('shows live games from both active seasons when two seasons are active', async () => {
     vi.mocked(api.get).mockImplementation(async (path: string) => {
-      if (path === '/auth/me') return { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup' }
+      if (path === '/auth/me') return { role: 'user', groupRole: 'owner', groupId: 'g1', groupName: 'TestGroup', groupSlug: 'testgroup', email: 'test@example.com', emailVerified: true }
       if (path === '/seasons') return [activeSeason, activeSeason2]
       if (path === '/seasons/s1/games') return [makeInProgressGame('game-1', 's1')]
       if (path === '/seasons/s2/games') return [makeInProgressGame('game-2', 's2')]
@@ -106,7 +106,7 @@ describe('Dashboard — live games', () => {
 
   it('shows a season card for each active season', async () => {
     vi.mocked(api.get).mockImplementation(async (path: string) => {
-      if (path === '/auth/me') return { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup' }
+      if (path === '/auth/me') return { role: 'user', groupRole: 'owner', groupId: 'g1', groupName: 'TestGroup', groupSlug: 'testgroup', email: 'test@example.com', emailVerified: true }
       if (path === '/seasons') return [activeSeason, activeSeason2]
       if (path === '/seasons/s1/games') return []
       if (path === '/seasons/s2/games') return []

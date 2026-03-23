@@ -50,7 +50,7 @@ describe('useAuth — login', () => {
     vi.mocked(api.post).mockResolvedValueOnce({ role: 'admin', username: 'admin' })
 
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() })
-    act(() => { result.current.login({ username: 'admin', password: 'pass' }) })
+    act(() => { result.current.login({ email: 'admin@example.com', password: 'pass' }) })
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/admin'))
   })
@@ -59,9 +59,21 @@ describe('useAuth — login', () => {
     vi.mocked(api.post).mockResolvedValueOnce({ role: 'group', groupId: 'g1', groupName: 'My Group' })
 
     const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() })
-    act(() => { result.current.login({ username: 'mygroup', password: 'pass' }) })
+    act(() => { result.current.login({ email: 'mygroup@example.com', password: 'pass' }) })
 
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/dashboard'))
+  })
+
+  it('navigates to /pick-group when requiresGroupSelection is true', async () => {
+    vi.mocked(api.post).mockResolvedValueOnce({
+      requiresGroupSelection: true,
+      groups: [{ id: 'g1', name: 'My Group', slug: 'my-group' }],
+    })
+
+    const { result } = renderHook(() => useAuth(), { wrapper: makeWrapper() })
+    act(() => { result.current.login({ email: 'user@example.com', password: 'pass' }) })
+
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/pick-group'))
   })
 })
 

@@ -16,108 +16,74 @@ afterEach(async () => {
   await app?.close()
 })
 
-describe('POST /api/admin/groups', () => {
-  it('creates a group and returns 201', async () => {
-    vi.mocked(prisma.group.findUnique).mockResolvedValue(null) // no slug conflict
-    vi.mocked(prisma.group.create).mockResolvedValueOnce({
-      id: 'g-new',
-      name: 'Test Group',
-      username: 'test-group',
-      createdAt: new Date(),
-    } as any)
+describe('GET /api/admin/groups', () => {
+  it('returns list of groups with slug', async () => {
+    vi.mocked(prisma.group.findMany).mockResolvedValueOnce([{
+      id: 'g1', name: 'Test Group', slug: 'test-group', currency: 'GBP',
+      createdAt: new Date(), _count: { players: 3 },
+    }] as any)
 
     const res = await app.inject({
-      method: 'POST',
+      method: 'GET',
       url: '/api/admin/groups',
-      payload: { name: 'Test Group', password: 'secret123' },
       cookies: { token: adminToken(app) },
     })
 
-    expect(res.statusCode).toBe(201)
-    expect(res.json()).toMatchObject({ name: 'Test Group', username: 'test-group' })
-  })
-
-  it('returns 400 when password is shorter than 6 chars', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Test', password: '123' },
-      cookies: { token: adminToken(app) },
-    })
-
-    expect(res.statusCode).toBe(400)
-  })
-
-  it('returns 403 when called by a non-admin (group role)', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Test', password: 'secret123' },
-      cookies: { token: groupToken(app) },
-    })
-
-    expect(res.statusCode).toBe(403)
+    expect(res.statusCode).toBe(200)
+    expect(res.json()[0]).toMatchObject({ id: 'g1', name: 'Test Group', slug: 'test-group', currency: 'GBP' })
   })
 
   it('returns 401 when no cookie is provided', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Test', password: 'secret123' },
-    })
-
+    const res = await app.inject({ method: 'GET', url: '/api/admin/groups' })
     expect(res.statusCode).toBe(401)
+  })
+
+  it('returns 403 when called by a group user', async () => {
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/admin/groups',
+      cookies: { token: groupToken(app) },
+    })
+    expect(res.statusCode).toBe(403)
   })
 })
 
-describe('POST /api/admin/groups — auto-slug + member password', () => {
-  it('auto-generates slug from name', async () => {
-    vi.mocked(prisma.group.findUnique).mockResolvedValue(null) // no conflict
-    vi.mocked(prisma.group.create).mockResolvedValueOnce({
-      id: 'g-new', name: 'Friday Night', username: 'friday-night',
-      createdAt: new Date(),
+describe('GET /api/admin/groups/:id', () => {
+  it('returns a single group by id', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce({
+      id: 'g1', name: 'Test Group', slug: 'test-group', currency: 'EUR',
+      createdAt: new Date(), _count: { players: 2 },
     } as any)
 
     const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Friday Night', password: 'secret123' },
+      method: 'GET',
+      url: '/api/admin/groups/g1',
       cookies: { token: adminToken(app) },
     })
 
-    expect(res.statusCode).toBe(201)
-    expect(res.json()).toMatchObject({ name: 'Friday Night', username: 'friday-night' })
+    expect(res.statusCode).toBe(200)
+    expect(res.json()).toMatchObject({ id: 'g1', slug: 'test-group' })
   })
 
-  it('creates group with member password and hashes it', async () => {
-    vi.mocked(prisma.group.findUnique).mockResolvedValue(null)
-    vi.mocked(prisma.group.create).mockResolvedValueOnce({
-      id: 'g-new', name: 'Test', username: 'test', createdAt: new Date(),
-    } as any)
+  it('returns 404 when group not found', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce(null)
 
     const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Test', password: 'adminpass', memberPassword: 'memberpass' },
+      method: 'GET',
+      url: '/api/admin/groups/missing',
       cookies: { token: adminToken(app) },
     })
 
-    expect(res.statusCode).toBe(201)
-    const createCall = vi.mocked(prisma.group.create).mock.calls[0][0]
-    expect(createCall.data).toHaveProperty('memberPasswordHash')
-    expect(typeof (createCall.data as any).memberPasswordHash).toBe('string')
-    // The hash must NOT be the plain text password
-    expect((createCall.data as any).memberPasswordHash).not.toBe('memberpass')
+    expect(res.statusCode).toBe(404)
   })
 
-  it('returns 400 when no name provided', async () => {
+  it('returns 403 when called by a group user', async () => {
     const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { password: 'secret123' },
-      cookies: { token: adminToken(app) },
+      method: 'GET',
+      url: '/api/admin/groups/g1',
+      cookies: { token: groupToken(app) },
     })
-    expect(res.statusCode).toBe(400)
+    expect(res.statusCode).toBe(403)
   })
 })
 
@@ -135,6 +101,18 @@ describe('DELETE /api/admin/groups/:id', () => {
     expect(res.statusCode).toBe(204)
   })
 
+  it('returns 404 when group not found', async () => {
+    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce(null)
+
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/admin/groups/missing',
+      cookies: { token: adminToken(app) },
+    })
+
+    expect(res.statusCode).toBe(404)
+  })
+
   it('returns 403 when called by a group user', async () => {
     const res = await app.inject({
       method: 'DELETE',
@@ -144,102 +122,13 @@ describe('DELETE /api/admin/groups/:id', () => {
 
     expect(res.statusCode).toBe(403)
   })
-})
 
-describe('POST /api/admin/groups — currency field', () => {
-  it('stores currency GBP when provided', async () => {
-    vi.mocked(prisma.group.findUnique).mockResolvedValue(null)
-    vi.mocked(prisma.group.create).mockResolvedValueOnce({
-      id: 'g1', name: 'Test', username: 'test', currency: 'GBP', createdAt: new Date(),
-    } as any)
-
+  it('returns 401 when no cookie is provided', async () => {
     const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Test', password: 'secret123', currency: 'GBP' },
-      cookies: { token: adminToken(app) },
-    })
-
-    expect(res.statusCode).toBe(201)
-    expect(res.json().currency).toBe('GBP')
-  })
-
-  it('defaults to EUR when currency is omitted', async () => {
-    vi.mocked(prisma.group.findUnique).mockResolvedValue(null)
-    vi.mocked(prisma.group.create).mockResolvedValueOnce({
-      id: 'g1', name: 'Test', username: 'test', currency: 'EUR', createdAt: new Date(),
-    } as any)
-
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Test', password: 'secret123' },
-      cookies: { token: adminToken(app) },
-    })
-
-    expect(res.statusCode).toBe(201)
-    expect(res.json()).toHaveProperty('currency')
-  })
-
-  it('returns 400 for invalid currency JPY', async () => {
-    const res = await app.inject({
-      method: 'POST',
-      url: '/api/admin/groups',
-      payload: { name: 'Test', password: 'secret123', currency: 'JPY' },
-      cookies: { token: adminToken(app) },
-    })
-
-    expect(res.statusCode).toBe(400)
-  })
-})
-
-describe('PATCH /api/admin/groups/:id — currency field', () => {
-  it('updates currency to USD', async () => {
-    vi.mocked(prisma.group.findUnique).mockResolvedValueOnce({
-      id: 'g1', name: 'Test', username: 'test', currency: 'EUR',
-      passwordHash: 'h', memberPasswordHash: null, createdAt: new Date(), seasons: [], groupPlayers: [], telegramChats: [],
-    } as any)
-    vi.mocked(prisma.group.update).mockResolvedValueOnce({
-      id: 'g1', name: 'Test', username: 'test', currency: 'USD', createdAt: new Date(),
-    } as any)
-
-    const res = await app.inject({
-      method: 'PATCH',
+      method: 'DELETE',
       url: '/api/admin/groups/g1',
-      payload: { currency: 'USD' },
-      cookies: { token: adminToken(app) },
     })
 
-    expect(res.statusCode).toBe(200)
-    expect(res.json().currency).toBe('USD')
-  })
-
-  it('returns 400 for invalid currency XXX', async () => {
-    const res = await app.inject({
-      method: 'PATCH',
-      url: '/api/admin/groups/g1',
-      payload: { currency: 'XXX' },
-      cookies: { token: adminToken(app) },
-    })
-
-    expect(res.statusCode).toBe(400)
-  })
-})
-
-describe('GET /api/admin/groups — includes currency', () => {
-  it('returns currency in group list', async () => {
-    vi.mocked(prisma.group.findMany).mockResolvedValueOnce([{
-      id: 'g1', name: 'Test', username: 'test', currency: 'GBP',
-      createdAt: new Date(), memberPasswordHash: null,
-    }] as any)
-
-    const res = await app.inject({
-      method: 'GET',
-      url: '/api/admin/groups',
-      cookies: { token: adminToken(app) },
-    })
-
-    expect(res.statusCode).toBe(200)
-    expect(res.json()[0].currency).toBe('GBP')
+    expect(res.statusCode).toBe(401)
   })
 })

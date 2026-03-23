@@ -34,7 +34,7 @@ function renderSeasons() {
 beforeEach(() => {
   vi.resetAllMocks()
   vi.mocked(api.get).mockImplementation(async (path: string) => {
-    if (path === '/auth/me') return { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup', currency: 'EUR' }
+    if (path === '/auth/me') return { role: 'user', groupRole: 'owner', groupId: 'g1', groupName: 'TestGroup', groupSlug: 'testgroup', email: 'test@example.com', emailVerified: true, currency: 'EUR' }
     if (path === '/seasons') return mockSeasons
     return []
   })

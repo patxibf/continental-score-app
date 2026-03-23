@@ -38,12 +38,25 @@ export const api = {
 
 // Types
 export interface AuthUser {
-  role: 'admin' | 'group'
-  groupAccess?: 'admin' | 'member'
+  role: 'admin' | 'user'
+  // user fields:
+  userId?: string
+  email?: string
+  emailVerified?: boolean
+  playerId?: string
+  playerName?: string
+  playerAvatar?: string
   groupId?: string
   groupName?: string
-  username?: string
+  groupSlug?: string
+  groupRole?: 'owner' | 'admin' | 'member'
   currency?: 'GBP' | 'EUR' | 'USD'
+  // admin fields:
+  adminId?: string
+  username?: string
+  // multi-group selection:
+  requiresGroupSelection?: boolean
+  groups?: Array<{ groupId: string; groupName: string; groupSlug: string; groupRole: string }>
 }
 
 export interface Player {
@@ -51,7 +64,6 @@ export interface Player {
   name: string
   avatar: string
   email?: string | null
-  phone?: string | null
   active: boolean
   createdAt: string
 }
@@ -124,10 +136,10 @@ export interface Standing {
 export interface Group {
   id: string
   name: string
-  username: string
+  slug: string
   createdAt: string
-  hasMemberPassword?: boolean
   currency: 'GBP' | 'EUR' | 'USD'
+  _count?: { players: number }
 }
 
 export interface AllTimePlayer {

@@ -53,8 +53,8 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       // Verify all players belong to this group
-      const playerLinks = await prisma.groupPlayer.findMany({
-        where: { groupId, playerId: { in: body.data.playerIds } },
+      const playerLinks = await prisma.player.findMany({
+        where: { groupId, id: { in: body.data.playerIds } },
       })
       if (playerLinks.length !== body.data.playerIds.length) {
         return reply.status(400).send({ error: 'One or more players not found in group' })
@@ -77,15 +77,6 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
           players: { include: { player: true } },
         },
       })
-
-      // Also add players to season if not already there
-      for (const playerId of body.data.playerIds) {
-        await prisma.seasonPlayer.upsert({
-          where: { seasonId_playerId: { seasonId, playerId } },
-          create: { seasonId, playerId },
-          update: {},
-        })
-      }
 
       return reply.status(201).send(game)
     },

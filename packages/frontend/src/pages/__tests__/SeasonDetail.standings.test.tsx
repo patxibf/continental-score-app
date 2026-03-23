@@ -52,7 +52,7 @@ const mockStandingsWithEarnings = [
   { playerId: 'p3', playerName: 'Carol', playerAvatar: 'bear', totalPoints: 45, gamesPlayed: 2, wins: 0, totalEarnings: 0 },
 ]
 
-const mockUser = { id: 'u1', username: 'testuser', role: 'user', groupAccess: 'admin', currency: 'GBP' }
+const mockUser = { id: 'u1', email: 'test@example.com', emailVerified: true, role: 'user', groupRole: 'owner', groupId: 'g1', groupName: 'TestGroup', groupSlug: 'testgroup', currency: 'GBP' }
 
 beforeEach(() => {
   vi.resetAllMocks()

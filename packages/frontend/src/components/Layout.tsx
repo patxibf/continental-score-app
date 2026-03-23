@@ -12,7 +12,7 @@ const navItems = [
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth()
+  const { user, logout, emailVerified, resendVerification, isResending } = useAuth()
   const location = useLocation()
 
   return (
@@ -48,6 +48,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </div>
       </header>
+
+      {user?.role === 'user' && !emailVerified && (
+        <div className="bg-yellow-50 border-b border-yellow-200 px-4 py-2 flex items-center justify-between gap-4">
+          <p className="text-xs text-yellow-800">Please verify your email address.</p>
+          <button
+            onClick={() => resendVerification()}
+            disabled={isResending}
+            className="text-xs text-yellow-700 font-medium hover:underline flex-shrink-0"
+          >
+            {isResending ? 'Sending…' : 'Resend →'}
+          </button>
+        </div>
+      )}
 
       {/* Main content */}
       <main className="flex-1 max-w-2xl mx-auto w-full px-4 py-6">

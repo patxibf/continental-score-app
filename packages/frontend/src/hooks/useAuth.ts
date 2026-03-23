@@ -14,9 +14,14 @@ export function useAuth() {
   })
 
   const loginMutation = useMutation({
-    mutationFn: (credentials: { username: string; password: string }) =>
+    mutationFn: (credentials: { email: string; password: string; groupId?: string }) =>
       api.post<AuthUser>('/auth/login', credentials),
     onSuccess: (data) => {
+      if (data.requiresGroupSelection) {
+        queryClient.setQueryData(['auth', 'me'], data)
+        navigate('/pick-group')
+        return
+      }
       queryClient.setQueryData(['auth', 'me'], data)
       if (data.role === 'admin') {
         navigate('/admin')
@@ -38,14 +43,21 @@ export function useAuth() {
     },
   })
 
+  const resendVerificationMutation = useMutation({
+    mutationFn: () => api.post('/auth/resend-verification'),
+  })
+
   return {
     user,
     isLoading,
     isAuthenticated: !!user,
-    isGroupAdmin: user?.role === 'admin' || user?.groupAccess === 'admin',
+    isGroupAdmin: user?.role === 'admin' || user?.groupRole === 'owner' || user?.groupRole === 'admin',
+    emailVerified: user?.emailVerified ?? true, // true for admin (no email)
     login: loginMutation.mutate,
     loginError: loginMutation.error?.message,
     isLoggingIn: loginMutation.isPending,
     logout: logoutMutation.mutate,
+    resendVerification: resendVerificationMutation.mutate,
+    isResending: resendVerificationMutation.isPending,
   }
 }

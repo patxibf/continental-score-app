@@ -320,16 +320,15 @@ describe('POST /api/seasons/:seasonId/games — totalPot', () => {
       id: 's1', groupId: 'group-1', status: 'ACTIVE',
       potEnabled: true, contributionAmount: { toString: () => '5.00' },
     } as any)
-    vi.mocked(prisma.groupPlayer.findMany).mockResolvedValueOnce([
-      { groupId: 'group-1', playerId: 'p1' },
-      { groupId: 'group-1', playerId: 'p2' },
-      { groupId: 'group-1', playerId: 'p3' },
+    vi.mocked(prisma.player.findMany).mockResolvedValueOnce([
+      { id: 'p1', groupId: 'group-1' },
+      { id: 'p2', groupId: 'group-1' },
+      { id: 'p3', groupId: 'group-1' },
     ] as any)
     vi.mocked(prisma.game.create).mockResolvedValueOnce({
       id: 'game-1', seasonId: 's1', status: 'IN_PROGRESS',
       totalPot: '15.00', players: [], createdAt: new Date(),
     } as any)
-    vi.mocked(prisma.seasonPlayer.upsert).mockResolvedValue({} as any)
 
     const res = await app.inject({
       method: 'POST',
@@ -349,15 +348,14 @@ describe('POST /api/seasons/:seasonId/games — totalPot', () => {
       id: 's1', groupId: 'group-1', status: 'ACTIVE',
       potEnabled: false, contributionAmount: null,
     } as any)
-    vi.mocked(prisma.groupPlayer.findMany).mockResolvedValueOnce([
-      { groupId: 'group-1', playerId: 'p1' },
-      { groupId: 'group-1', playerId: 'p2' },
+    vi.mocked(prisma.player.findMany).mockResolvedValueOnce([
+      { id: 'p1', groupId: 'group-1' },
+      { id: 'p2', groupId: 'group-1' },
     ] as any)
     vi.mocked(prisma.game.create).mockResolvedValueOnce({
       id: 'game-1', seasonId: 's1', status: 'IN_PROGRESS',
       totalPot: null, players: [], createdAt: new Date(),
     } as any)
-    vi.mocked(prisma.seasonPlayer.upsert).mockResolvedValue({} as any)
 
     const res = await app.inject({
       method: 'POST',

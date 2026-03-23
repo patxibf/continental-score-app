@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -6,12 +7,12 @@ import { Label } from '@/components/ui/label'
 
 export default function Login() {
   const { login, loginError, isLoggingIn } = useAuth()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    login({ username, password })
+    login({ email, password })
   }
 
   return (
@@ -42,17 +43,17 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="username" className="text-xs uppercase tracking-widest text-muted-foreground">
-                Group
+              <Label htmlFor="email" className="text-xs uppercase tracking-widest text-muted-foreground">
+                Email
               </Label>
               <Input
-                id="username"
-                type="text"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
-                placeholder="your-group"
+                id="email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="you@example.com"
                 required
-                autoComplete="username"
+                autoComplete="email"
                 className="bg-[hsl(var(--secondary))] border-[var(--border-color)] focus:border-[var(--cobalt)] focus:ring-0 placeholder:text-muted-foreground/40 h-11"
               />
             </div>
@@ -81,6 +82,14 @@ export default function Login() {
             <Button type="submit" className="w-full h-11 mt-2 text-sm" disabled={isLoggingIn}>
               {isLoggingIn ? 'Entering…' : 'Enter Club'}
             </Button>
+            <div className="flex justify-between text-xs text-muted-foreground mt-1">
+              <Link to="/forgot-password" className="hover:text-[var(--cobalt)] transition-colors">
+                Forgot password?
+              </Link>
+              <Link to="/register" className="hover:text-[var(--cobalt)] transition-colors">
+                Create a group →
+              </Link>
+            </div>
           </form>
         </div>
 
