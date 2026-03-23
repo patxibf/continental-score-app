@@ -21,11 +21,12 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 30m
           script: |
             sudo chown -R ec2-user:ec2-user /app/continental
             cd /app/continental
             git pull origin main
-            npm ci
+            npm install --prefer-offline
             npm run db:generate -w packages/backend
             npm run db:migrate:deploy -w packages/backend
             npm run build -w packages/backend
