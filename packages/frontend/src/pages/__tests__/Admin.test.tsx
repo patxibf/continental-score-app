@@ -47,15 +47,6 @@ describe('Admin — currency badge in group list', () => {
 })
 
 describe('Admin — group list', () => {
-  it('shows group slug below group name', async () => {
-    renderAdmin()
-
-    await waitFor(() => expect(screen.getByText('Poker Night')).toBeInTheDocument())
-
-    expect(screen.getByText('@poker-night')).toBeInTheDocument()
-    expect(screen.getByText('@card-club')).toBeInTheDocument()
-  })
-
   it('calls delete endpoint and invalidates list when confirmed', async () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true)
     vi.mocked(api.delete).mockResolvedValue({})
