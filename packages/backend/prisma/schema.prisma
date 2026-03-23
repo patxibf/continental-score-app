@@ -20,57 +20,84 @@ enum Currency {
   USD
 }
 
+enum GroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum TokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model User {
+  id            String      @id @default(uuid())
+  email         String      @unique
+  passwordHash  String
+  emailVerified Boolean     @default(false)
+  createdAt     DateTime    @default(now())
+
+  players       Player[]
+  tokens        AuthToken[]
+}
+
+model AuthToken {
+  id        String    @id @default(uuid())
+  token     String    @unique
+  type      TokenType
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model Group {
-  id                 String         @id @default(uuid())
-  name               String
-  username           String         @unique
-  passwordHash       String
-  memberPasswordHash String?
-  currency           Currency       @default(EUR)
-  createdAt          DateTime       @default(now())
-  groupPlayers       GroupPlayer[]
-  seasons            Season[]
-  telegramChats      TelegramChat[]
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  currency  Currency @default(EUR)
+  createdAt DateTime @default(now())
+
+  players       Player[]
+  seasons       Season[]
+  telegramChats TelegramChat[]
 }
 
 model Player {
-  id            String         @id @default(uuid())
-  name          String
-  avatar        String
-  email         String?
-  phone         String?
-  active        Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  groupLinks    GroupPlayer[]
-  seasonLinks   SeasonPlayer[]
-  gameLinks     GamePlayer[]
-  roundScores   RoundScore[]
+  id        String    @id @default(uuid())
+  groupId   String
+  userId    String?
+  name      String
+  avatar    String    @default("cat")
+  role      GroupRole @default(MEMBER)
+  email     String?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+
+  user        User?        @relation(fields: [userId], references: [id])
+  group       Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  gamePlayers GamePlayer[]
+  roundScores RoundScore[]
   telegramUsers TelegramUser[]
-}
 
-model GroupPlayer {
-  id       String   @id @default(uuid())
-  groupId  String
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  playerId String
-  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  joinedAt DateTime @default(now())
-
-  @@unique([groupId, playerId])
+  @@unique([groupId, userId])
 }
 
 model Season {
-  id        String         @id @default(uuid())
-  groupId   String
-  group     Group          @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  name      String
-  status    SeasonStatus   @default(ACTIVE)
-  createdAt DateTime       @default(now())
+  id                 String       @id @default(uuid())
+  groupId            String
+  group              Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name               String
+  status             SeasonStatus @default(ACTIVE)
+  createdAt          DateTime     @default(now())
   closedAt           DateTime?
-  potEnabled         Boolean  @default(false)
-  contributionAmount Decimal? @db.Decimal(10, 2)
-  players            SeasonPlayer[]
-  games              Game[]
+  potEnabled         Boolean      @default(false)
+  contributionAmount Decimal?     @db.Decimal(10, 2)
+
+  games Game[]
 }
 
 enum SeasonStatus {
@@ -78,27 +105,17 @@ enum SeasonStatus {
   CLOSED
 }
 
-model SeasonPlayer {
-  id       String   @id @default(uuid())
-  seasonId String
-  season   Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  playerId String
-  player   Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
-  joinedAt DateTime @default(now())
-
-  @@unique([seasonId, playerId])
-}
-
 model Game {
-  id        String       @id @default(uuid())
+  id        String     @id @default(uuid())
   seasonId  String
-  season    Season       @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  status    GameStatus   @default(IN_PROGRESS)
-  createdAt DateTime     @default(now())
+  season    Season     @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  status    GameStatus @default(IN_PROGRESS)
+  createdAt DateTime   @default(now())
   closedAt  DateTime?
-  totalPot  Decimal?     @db.Decimal(10, 2)
-  players   GamePlayer[]
-  rounds    Round[]
+  totalPot  Decimal?   @db.Decimal(10, 2)
+
+  players GamePlayer[]
+  rounds  Round[]
 }
 
 enum GameStatus {
@@ -107,9 +124,9 @@ enum GameStatus {
 }
 
 model GamePlayer {
-  id       String @id @default(uuid())
-  gameId   String
-  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  gameId     String
+  game       Game     @relation(fields: [gameId], references: [id], onDelete: Cascade)
   playerId   String
   player     Player   @relation(fields: [playerId], references: [id], onDelete: Cascade)
   potAwarded Decimal? @db.Decimal(10, 2)
@@ -118,9 +135,9 @@ model GamePlayer {
 }
 
 model Round {
-  id          String       @id @default(uuid())
+  id          String     @id @default(uuid())
   gameId      String
-  game        Game         @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  game        Game       @relation(fields: [gameId], references: [id], onDelete: Cascade)
   roundNumber Int
   completedAt DateTime?
   scores      RoundScore[]
