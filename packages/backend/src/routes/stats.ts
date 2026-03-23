@@ -92,7 +92,7 @@ const statsRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params as { id: string }
 
       const player = await prisma.player.findFirst({
-        where: { id, groupLinks: { some: { groupId } } },
+        where: { id, groupId },
       })
       if (!player) {
         return reply.status(404).send({ error: 'Player not found' })

@@ -196,87 +196,12 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         return reply.status(404).send({ error: 'Season not found' })
       }
 
-      const seasonPlayers = await prisma.seasonPlayer.findMany({
-        where: { seasonId: id },
-        include: { player: true },
-        orderBy: { player: { name: 'asc' } },
+      const players = await prisma.player.findMany({
+        where: { groupId },
+        orderBy: { name: 'asc' },
       })
 
-      return reply.send(seasonPlayers.map(sp => sp.player))
-    },
-  )
-
-  fastify.post(
-    '/api/seasons/:id/players',
-    { preHandler: [fastify.requireGroupAdmin] },
-    async (request, reply) => {
-      const { groupId } = request.user as { groupId: string }
-      const { id } = request.params as { id: string }
-      const body = z.object({ playerId: z.string() }).safeParse(request.body)
-      if (!body.success) {
-        return reply.status(400).send({ error: 'Invalid request' })
-      }
-
-      const season = await prisma.season.findFirst({ where: { id, groupId } })
-      if (!season) {
-        return reply.status(404).send({ error: 'Season not found' })
-      }
-
-      // Verify player belongs to this group
-      const playerLink = await prisma.groupPlayer.findUnique({
-        where: { groupId_playerId: { groupId, playerId: body.data.playerId } },
-      })
-      if (!playerLink) {
-        return reply.status(404).send({ error: 'Player not found in group' })
-      }
-
-      const existing = await prisma.seasonPlayer.findUnique({
-        where: { seasonId_playerId: { seasonId: id, playerId: body.data.playerId } },
-      })
-      if (existing) {
-        return reply.status(409).send({ error: 'Player already in season' })
-      }
-
-      await prisma.seasonPlayer.create({
-        data: { seasonId: id, playerId: body.data.playerId },
-      })
-
-      return reply.status(201).send({ ok: true })
-    },
-  )
-
-  fastify.delete(
-    '/api/seasons/:id/players/:playerId',
-    { preHandler: [fastify.requireGroupAdmin] },
-    async (request, reply) => {
-      const { groupId } = request.user as { groupId: string }
-      const { id, playerId } = request.params as { id: string; playerId: string }
-
-      const season = await prisma.season.findFirst({ where: { id, groupId } })
-      if (!season) {
-        return reply.status(404).send({ error: 'Season not found' })
-      }
-
-      // Check if player has games in this season
-      const hasGames = await prisma.gamePlayer.findFirst({
-        where: { playerId, game: { seasonId: id } },
-      })
-      if (hasGames) {
-        return reply.status(400).send({ error: 'Cannot remove player with games in this season' })
-      }
-
-      const seasonPlayer = await prisma.seasonPlayer.findUnique({
-        where: { seasonId_playerId: { seasonId: id, playerId } },
-      })
-      if (!seasonPlayer) {
-        return reply.status(404).send({ error: 'Player not in season' })
-      }
-
-      await prisma.seasonPlayer.delete({
-        where: { seasonId_playerId: { seasonId: id, playerId } },
-      })
-
-      return reply.status(204).send()
+      return reply.send(players)
     },
   )
 
