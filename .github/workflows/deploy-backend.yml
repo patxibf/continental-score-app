@@ -11,6 +11,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - uses: actions/checkout@v4
@@ -42,8 +43,8 @@ jobs:
           source: "packages/backend/dist/"
           target: "/app/continental/packages/backend/"
           strip_components: 2
-          timeout: 30s
-          command_timeout: 3m
+          timeout: 60s
+          command_timeout: 20m
 
       - name: Copy bot dist to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -54,8 +55,8 @@ jobs:
           source: "packages/bot/dist/"
           target: "/app/continental/packages/bot/"
           strip_components: 2
-          timeout: 30s
-          command_timeout: 3m
+          timeout: 60s
+          command_timeout: 20m
 
       - name: Run migrations and restart on EC2
         uses: appleboy/ssh-action@v1
