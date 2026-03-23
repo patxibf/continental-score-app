@@ -22,6 +22,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            sudo chown -R ec2-user:ec2-user /app/continental
             cd /app/continental
             git pull origin main
             npm ci
