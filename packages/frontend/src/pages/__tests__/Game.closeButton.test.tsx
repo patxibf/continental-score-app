@@ -15,7 +15,7 @@ import { api } from '@/lib/api'
 vi.mock('@/hooks/useToast', () => ({ toast: vi.fn() }))
 vi.mock('@/lib/haptics', () => ({ haptic: vi.fn() }))
 
-const adminUser = { role: 'group', groupAccess: 'admin', groupId: 'g1', groupName: 'TestGroup' }
+const adminUser = { role: 'user', groupRole: 'owner', groupId: 'g1', groupName: 'TestGroup', groupSlug: 'testgroup', email: 'test@example.com', emailVerified: true }
 
 function makeGame(roundCount: number) {
   return {
