@@ -24,7 +24,7 @@ const seasonRoutes: FastifyPluginAsync = async (fastify) => {
         where: { groupId },
         orderBy: { createdAt: 'desc' },
         include: {
-          _count: { select: { games: true, players: true } },
+          _count: { select: { games: true } },
         },
       })
 

@@ -1,16 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock resend before importing mailer
-vi.mock('resend', () => {
-  const mockSend = vi.fn().mockResolvedValue({ data: { id: 'email-1' }, error: null })
-  return {
-    Resend: vi.fn(function() {
-      this.emails = {
-        send: mockSend,
-      }
-    }),
-  }
-})
+vi.mock('resend', () => ({
+  Resend: vi.fn(function(this: any) {
+    this.emails = {
+      send: vi.fn().mockResolvedValue({ data: { id: 'email-1' }, error: null }),
+    }
+  }),
+}))
 
 import { sendVerificationEmail, sendPasswordResetEmail } from '../mailer.js'
 
