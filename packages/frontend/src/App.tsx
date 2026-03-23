@@ -14,6 +14,11 @@ import Stats from '@/pages/Stats'
 import StatsAllTime from '@/pages/StatsAllTime'
 import PlayerStats from '@/pages/PlayerStats'
 import Admin from '@/pages/Admin'
+import Register from '@/pages/Register'
+import VerifyEmail from '@/pages/VerifyEmail'
+import ForgotPassword from '@/pages/ForgotPassword'
+import ResetPassword from '@/pages/ResetPassword'
+import PickGroup from '@/pages/PickGroup'
 
 function AppRoot() {
   const { user, isLoading } = useAuth()
@@ -36,6 +41,11 @@ export default function App() {
     <Routes>
       <Route path="/" element={<AppRoot />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+      <Route path="/pick-group" element={<PickGroup />} />
 
       <Route
         path="/dashboard"
