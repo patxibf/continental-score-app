@@ -2,6 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { buildApp, groupToken, memberToken } from '../../test/helpers.js'
 import type { FastifyInstance } from 'fastify'
 
+function adminGroupToken(app: FastifyInstance) {
+  return groupToken(app, 'group-1', 'admin')
+}
+
 vi.mock('../../lib/prisma.js')
 import { prisma } from '../../lib/prisma.js'
 
@@ -56,6 +60,38 @@ describe('PATCH /api/groups/current', () => {
       url: '/api/groups/current',
       payload: { name: 'New Name' },
       cookies: { token: memberToken(app) },
+    })
+    expect(res.statusCode).toBe(403)
+  })
+})
+
+describe('DELETE /api/groups/current', () => {
+  it('allows owner to delete the group', async () => {
+    vi.mocked(prisma.group.delete).mockResolvedValueOnce({ id: 'group-1' } as any)
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/groups/current',
+      cookies: { token: groupToken(app) },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().message).toBe('Group deleted')
+    expect(vi.mocked(prisma.group.delete)).toHaveBeenCalledWith({ where: { id: 'group-1' } })
+  })
+
+  it('returns 403 for member', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/groups/current',
+      cookies: { token: memberToken(app) },
+    })
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('returns 403 for admin (non-owner)', async () => {
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/groups/current',
+      cookies: { token: adminGroupToken(app) },
     })
     expect(res.statusCode).toBe(403)
   })

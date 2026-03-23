@@ -66,6 +66,14 @@ export interface Player {
   email?: string | null
   active: boolean
   createdAt: string
+  role?: 'OWNER' | 'ADMIN' | 'MEMBER'
+}
+
+export interface GroupSettings {
+  id: string
+  name: string
+  slug: string
+  currency: 'GBP' | 'EUR' | 'USD'
 }
 
 export interface Season {

@@ -72,6 +72,32 @@ const playerRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send(updated)
     },
   )
+
+  // PATCH /api/players/:id/role — change player role (admin/owner only)
+  fastify.patch(
+    '/api/players/:id/role',
+    { preHandler: [fastify.requireGroupAdmin] },
+    async (request, reply) => {
+      const { groupId } = request.user as { groupId: string }
+      const { id } = request.params as { id: string }
+      const body = z.object({
+        role: z.enum(['ADMIN', 'MEMBER']),
+      }).safeParse(request.body)
+      if (!body.success) return reply.status(400).send({ error: body.error.errors[0].message })
+
+      const player = await prisma.player.findFirst({
+        where: { id, groupId },
+      })
+      if (!player) return reply.status(404).send({ error: 'Player not found' })
+      if (player.role === 'OWNER') return reply.status(403).send({ error: 'CANNOT_CHANGE_OWNER' })
+
+      const updated = await prisma.player.update({
+        where: { id },
+        data: { role: body.data.role },
+      })
+      return reply.send(updated)
+    },
+  )
 }
 
 export default playerRoutes

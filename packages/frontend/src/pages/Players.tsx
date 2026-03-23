@@ -10,6 +10,48 @@ import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/hooks/useAuth'
 import { Plus, Pencil } from 'lucide-react'
 
+function RoleBadge({ role }: { role?: 'OWNER' | 'ADMIN' | 'MEMBER' }) {
+  if (!role) return null
+  const styles: Record<string, string> = {
+    OWNER: 'bg-amber-100 text-amber-800 border border-amber-300',
+    ADMIN: 'bg-blue-100 text-blue-700 border border-blue-300',
+    MEMBER: 'bg-gray-100 text-gray-500 border border-gray-200',
+  }
+  return (
+    <span className={`text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded ${styles[role]}`}>
+      {role.toLowerCase()}
+    </span>
+  )
+}
+
+function RoleControl({ player }: { player: Player }) {
+  const queryClient = useQueryClient()
+  const roleMutation = useMutation({
+    mutationFn: (role: 'ADMIN' | 'MEMBER') =>
+      api.patch<Player>(`/players/${player.id}/role`, { role }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['players'] })
+      toast({ title: 'Role updated' })
+    },
+    onError: (err: Error) => toast({ title: err.message, variant: 'destructive' }),
+  })
+
+  if (player.role === 'OWNER') return null
+
+  return (
+    <select
+      value={player.role || 'MEMBER'}
+      onChange={e => roleMutation.mutate(e.target.value as 'ADMIN' | 'MEMBER')}
+      disabled={roleMutation.isPending}
+      className="text-xs border border-[var(--border-color)] rounded-md px-2 py-1 bg-[hsl(var(--secondary))] text-foreground focus:outline-none focus:border-[var(--cobalt)]"
+      aria-label={`Change role for ${player.name}`}
+    >
+      <option value="MEMBER">Member</option>
+      <option value="ADMIN">Admin</option>
+    </select>
+  )
+}
+
 function PlayerDialog({
   open, onClose, player,
 }: {
@@ -133,22 +175,28 @@ export default function Players() {
                 {AVATAR_EMOJIS[player.avatar] || '🎮'}
               </div>
               <div>
-                <p className="font-semibold">{player.name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-semibold">{player.name}</p>
+                  <RoleBadge role={player.role} />
+                </div>
                 {!player.active && (
                   <p className="text-xs text-muted-foreground">Inactive</p>
                 )}
               </div>
             </div>
-            {isGroupAdmin && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => openEdit(player)}
-                className="text-muted-foreground hover:text-[var(--cobalt)] h-8 w-8"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              {isGroupAdmin && <RoleControl player={player} />}
+              {isGroupAdmin && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => openEdit(player)}
+                  className="text-muted-foreground hover:text-[var(--cobalt)] h-8 w-8"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+              )}
+            </div>
           </div>
         ))}
         {players?.length === 0 && (
