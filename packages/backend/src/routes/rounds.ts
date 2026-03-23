@@ -20,7 +20,7 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
     '/api/games/:gameId/rounds',
     { preHandler: [fastify.requireGroup] },
     async (request, reply) => {
-      const { groupId } = request.user as { groupId: string; groupAccess: string }
+      const { groupId } = request.user as { groupId: string }
       const { gameId } = request.params as { gameId: string }
 
       const game = await prisma.game.findFirst({
@@ -48,7 +48,7 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
     '/api/games/:gameId/rounds',
     { preHandler: [fastify.requireGroup] },
     async (request, reply) => {
-      const { groupId } = request.user as { groupId: string; groupAccess: string }
+      const { groupId } = request.user as { groupId: string }
       const { gameId } = request.params as { gameId: string }
       const body = submitRoundSchema.safeParse(request.body)
       if (!body.success) {
@@ -117,7 +117,7 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
     '/api/rounds/:id',
     { preHandler: [fastify.requireGroup] },
     async (request, reply) => {
-      const { groupId } = request.user as { groupId: string; groupAccess: string }
+      const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
       const body = z.object({
         scores: z.array(scoreSchema).min(2),
@@ -171,7 +171,7 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
     '/api/rounds/:id',
     { preHandler: [fastify.requireGroup] },
     async (request, reply) => {
-      const { groupId } = request.user as { groupId: string; groupAccess: string }
+      const { groupId } = request.user as { groupId: string }
       const { id } = request.params as { id: string }
 
       const round = await prisma.round.findFirst({

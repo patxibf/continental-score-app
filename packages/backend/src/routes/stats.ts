@@ -150,7 +150,7 @@ const statsRoutes: FastifyPluginAsync = async (fastify) => {
   )
 
   fastify.get('/api/stats/alltime', { preHandler: [fastify.requireGroup] }, async (request, reply) => {
-    const { groupId } = request.user as { groupId: string; groupAccess: string }
+    const { groupId } = request.user as { groupId: string }
 
     const games = await prisma.game.findMany({
       where: { status: 'CLOSED', season: { groupId } },
@@ -222,7 +222,7 @@ const statsRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   fastify.get('/api/stats/h2h', { preHandler: [fastify.requireGroup] }, async (request, reply) => {
-    const { groupId } = request.user as { groupId: string; groupAccess: string }
+    const { groupId } = request.user as { groupId: string }
     const { playerA, playerB } = request.query as { playerA: string; playerB: string }
 
     if (!playerA || !playerB) return reply.status(400).send({ error: 'playerA and playerB required' })
