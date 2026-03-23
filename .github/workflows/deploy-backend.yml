@@ -46,6 +46,18 @@ jobs:
           timeout: 60s
           command_timeout: 20m
 
+      - name: Copy Prisma schema and migrations to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "packages/backend/prisma/"
+          target: "/app/continental/packages/backend/"
+          strip_components: 2
+          timeout: 60s
+          command_timeout: 20m
+
       - name: Copy bot dist to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
@@ -68,6 +80,7 @@ jobs:
           script: |
             cd /app/continental
             npm install --omit=dev
+            npm run db:generate -w packages/backend
             npm run db:migrate:deploy -w packages/backend
             pm2 restart continental-api || pm2 start packages/backend/dist/index.js --name continental-api
             pm2 restart continental-bot || pm2 start packages/bot/dist/index.js --name continental-bot
