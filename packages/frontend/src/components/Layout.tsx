@@ -12,7 +12,7 @@ const navItems = [
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user, logout, emailVerified, resendVerification, isResending } = useAuth()
+  const { user, logout, emailVerified, resendVerification, isResending, isGroupAdmin } = useAuth()
   const location = useLocation()
 
   return (
@@ -92,6 +92,28 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               )
             })}
+            {isGroupAdmin && (
+              (() => {
+                const active = location.pathname.startsWith('/settings')
+                return (
+                  <Link
+                    to="/settings"
+                    className={cn(
+                      'flex-1 flex flex-col items-center py-2.5 text-xs gap-1 transition-all duration-200',
+                      active
+                        ? 'text-[var(--cobalt)]'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    <Settings className={cn('h-5 w-5 transition-transform duration-200', active && 'scale-110')} />
+                    <span className="font-medium">Settings</span>
+                    {active && (
+                      <span className="absolute bottom-0 h-[2px] w-8 bg-[var(--cobalt)] rounded-t-full" />
+                    )}
+                  </Link>
+                )
+              })()
+            )}
           </div>
         </nav>
       )}

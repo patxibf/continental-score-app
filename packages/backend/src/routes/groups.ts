@@ -44,6 +44,17 @@ const groupRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send(updated)
     },
   )
+
+  fastify.delete(
+    '/api/groups/current',
+    { preHandler: [fastify.requireGroupOwner] },
+    async (request, reply) => {
+      const { groupId } = request.user as { groupId: string }
+      await prisma.group.delete({ where: { id: groupId } })
+      reply.clearCookie('token', { path: '/' })
+      return reply.send({ message: 'Group deleted' })
+    },
+  )
 }
 
 export default groupRoutes

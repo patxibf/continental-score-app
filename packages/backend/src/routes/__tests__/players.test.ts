@@ -79,3 +79,64 @@ describe('PATCH /api/players/:id', () => {
     expect(res.statusCode).toBe(404)
   })
 })
+
+describe('PATCH /api/players/:id/role', () => {
+  it('allows admin to promote member to admin', async () => {
+    vi.mocked(prisma.player.findFirst).mockResolvedValueOnce({ id: 'p1', role: 'MEMBER' } as any)
+    vi.mocked(prisma.player.update).mockResolvedValueOnce({ id: 'p1', role: 'ADMIN' } as any)
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/players/p1/role',
+      payload: { role: 'ADMIN' },
+      cookies: { token: groupToken(app) },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().role).toBe('ADMIN')
+  })
+
+  it('allows admin to demote admin to member', async () => {
+    vi.mocked(prisma.player.findFirst).mockResolvedValueOnce({ id: 'p2', role: 'ADMIN' } as any)
+    vi.mocked(prisma.player.update).mockResolvedValueOnce({ id: 'p2', role: 'MEMBER' } as any)
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/players/p2/role',
+      payload: { role: 'MEMBER' },
+      cookies: { token: groupToken(app) },
+    })
+    expect(res.statusCode).toBe(200)
+    expect(res.json().role).toBe('MEMBER')
+  })
+
+  it('returns 403 when trying to change owner role', async () => {
+    vi.mocked(prisma.player.findFirst).mockResolvedValueOnce({ id: 'p3', role: 'OWNER' } as any)
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/players/p3/role',
+      payload: { role: 'MEMBER' },
+      cookies: { token: groupToken(app) },
+    })
+    expect(res.statusCode).toBe(403)
+    expect(res.json().error).toBe('CANNOT_CHANGE_OWNER')
+  })
+
+  it('returns 404 when player not in group', async () => {
+    vi.mocked(prisma.player.findFirst).mockResolvedValueOnce(null)
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/players/p-other/role',
+      payload: { role: 'ADMIN' },
+      cookies: { token: groupToken(app) },
+    })
+    expect(res.statusCode).toBe(404)
+  })
+
+  it('returns 403 for member (non-admin)', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/players/p1/role',
+      payload: { role: 'ADMIN' },
+      cookies: { token: memberToken(app) },
+    })
+    expect(res.statusCode).toBe(403)
+  })
+})

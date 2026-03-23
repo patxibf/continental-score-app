@@ -14,6 +14,7 @@ import Stats from '@/pages/Stats'
 import StatsAllTime from '@/pages/StatsAllTime'
 import PlayerStats from '@/pages/PlayerStats'
 import Admin from '@/pages/Admin'
+import Settings from '@/pages/Settings'
 import Register from '@/pages/Register'
 import VerifyEmail from '@/pages/VerifyEmail'
 import ForgotPassword from '@/pages/ForgotPassword'
@@ -143,6 +144,16 @@ export default function App() {
           <ProtectedRoute>
             <Layout>
               <PlayerStats />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <Settings />
             </Layout>
           </ProtectedRoute>
         }
