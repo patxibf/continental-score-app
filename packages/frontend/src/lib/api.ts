@@ -66,6 +66,14 @@ export interface Player {
   email?: string | null
   active: boolean
   createdAt: string
+  role?: 'OWNER' | 'ADMIN' | 'MEMBER'
+  userId?: string | null
+  inviteToken?: string | null
+}
+
+export interface InvitationPreview {
+  playerName: string
+  groupName: string
 }
 
 export interface Season {

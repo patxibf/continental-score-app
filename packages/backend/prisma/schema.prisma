@@ -67,15 +67,17 @@ model Group {
 }
 
 model Player {
-  id        String    @id @default(uuid())
-  groupId   String
-  userId    String?
-  name      String
-  avatar    String    @default("cat")
-  role      GroupRole @default(MEMBER)
-  email     String?
-  active    Boolean   @default(true)
-  createdAt DateTime  @default(now())
+  id           String    @id @default(uuid())
+  groupId      String
+  userId       String?
+  name         String
+  avatar       String    @default("cat")
+  role         GroupRole @default(MEMBER)
+  email        String?
+  active       Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  inviteToken  String?   @unique
+  inviteExpiry DateTime?
 
   user        User?        @relation(fields: [userId], references: [id])
   group       Group        @relation(fields: [groupId], references: [id], onDelete: Cascade)

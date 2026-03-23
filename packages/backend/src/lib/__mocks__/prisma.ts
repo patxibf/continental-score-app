@@ -28,6 +28,8 @@ export const prisma = {
     findMany: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
+    upsert: vi.fn(),
   },
   game: {
     findFirst: vi.fn(),
