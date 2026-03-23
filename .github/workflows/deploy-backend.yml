@@ -70,3 +70,4 @@ jobs:
             pm2 restart continental-api || pm2 start packages/backend/dist/index.js --name continental-api
             pm2 restart continental-bot || pm2 start packages/bot/dist/index.js --name continental-bot
             pm2 save
+
