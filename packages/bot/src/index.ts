@@ -39,7 +39,7 @@ bot.command('start', async ctx => {
   await ctx.reply(
     '🃏 *Continental Scorekeeper Bot*\n\n' +
     'Commands:\n' +
-    '/login <group\\_username> — Link this chat to your group\n' +
+    '/login <group\\_slug> — Link this chat to your group\n' +
     '/newgame — Start a new game\n' +
     '/score — Enter round scores\n' +
     '/closegame — Close the current game\n' +
@@ -48,15 +48,15 @@ bot.command('start', async ctx => {
   )
 })
 
-// /login <group_username>
+// /login <group_slug>
 bot.command('login', async ctx => {
   const args = ctx.message.text.split(' ')
   if (args.length < 2) {
-    return ctx.reply('Usage: /login <group_username>')
+    return ctx.reply('Usage: /login <group_slug>')
   }
 
-  const username = args[1].toLowerCase()
-  const group = await prisma.group.findUnique({ where: { username } })
+  const slug = args[1].toLowerCase()
+  const group = await prisma.group.findUnique({ where: { slug } })
   if (!group) {
     return ctx.reply('Group not found. Check the username and try again.')
   }
@@ -82,16 +82,15 @@ bot.command('newgame', async ctx => {
   // Get players in active season
   const season = await prisma.season.findFirst({
     where: { groupId: group.id, status: 'ACTIVE' },
-    include: { players: { include: { player: true } } },
   })
 
   if (!season) {
     return ctx.reply('No active season found.')
   }
 
-  const players = season.players
-    .map(sp => sp.player)
-    .filter(p => p.active)
+  const players = await prisma.player.findMany({
+    where: { groupId: group.id, active: true },
+  })
   if (players.length < 2) {
     return ctx.reply('Need at least 2 players in the season.')
   }
@@ -182,7 +181,7 @@ bot.action('cancel_game', async ctx => {
 bot.command('score', async ctx => {
   const chatId = String(ctx.chat.id)
   const group = await getLinkedGroup(chatId)
-  if (!group) return ctx.reply('Link this chat first: /login <group_username>')
+  if (!group) return ctx.reply('Link this chat first: /login <group_slug>')
 
   const game = await getOpenGame(group.id)
   if (!game) return ctx.reply('No game in progress. Start one with /newgame')
@@ -228,7 +227,7 @@ bot.action(/went_out:(.+)/, async ctx => {
   scoreSession.scores[playerId] = 0
   await ctx.answerCbQuery()
 
-  const player = scoreSession.players.find((p: any) => p.id === playerId)
+  const player = scoreSession.players.find((p: { id: string; name: string }) => p.id === playerId)
   await ctx.editMessageText(`✅ ${player?.name} went out (0 pts)`)
   await promptNextScore(ctx, chatId)
 })
@@ -246,7 +245,7 @@ async function promptNextScore(ctx: any, chatId: string) {
   if (!scoreSession) return
 
   const remaining = scoreSession.players.filter(
-    (p: any) => p.id !== scoreSession.wentOut && !(p.id in scoreSession.scores),
+    (p: { id: string; name: string }) => p.id !== scoreSession.wentOut && !(p.id in scoreSession.scores),
   )
 
   if (remaining.length === 0) {
@@ -274,7 +273,7 @@ bot.on('text', async ctx => {
   }
 
   scoreSession.scores[scoreSession.waitingFor] = points
-  const player = scoreSession.players.find((p: any) => p.id === scoreSession.waitingFor)
+  const player = scoreSession.players.find((p: { id: string; name: string }) => p.id === scoreSession.waitingFor)
   await ctx.reply(`Got it: ${player?.name} = ${points} pts`)
   scoreSession.waitingFor = null
 
@@ -286,7 +285,7 @@ async function submitRoundScores(ctx: any, chatId: string) {
   const scoreSession = (global as any)[sessionKey]
   if (!scoreSession) return
 
-  const scores = scoreSession.players.map((p: any) => ({
+  const scores = scoreSession.players.map((p: { id: string; name: string }) => ({
     playerId: p.id,
     points: scoreSession.scores[p.id] ?? 0,
     wentOut: p.id === scoreSession.wentOut,
@@ -327,7 +326,7 @@ async function submitRoundScores(ctx: any, chatId: string) {
 bot.command('closegame', async ctx => {
   const chatId = String(ctx.chat.id)
   const group = await getLinkedGroup(chatId)
-  if (!group) return ctx.reply('Link this chat first: /login <group_username>')
+  if (!group) return ctx.reply('Link this chat first: /login <group_slug>')
 
   const game = await getOpenGame(group.id)
   if (!game) return ctx.reply('No game in progress.')
@@ -380,7 +379,7 @@ bot.action('cancel_close', async ctx => {
 bot.command('ranking', async ctx => {
   const chatId = String(ctx.chat.id)
   const group = await getLinkedGroup(chatId)
-  if (!group) return ctx.reply('Link this chat first: /login <group_username>')
+  if (!group) return ctx.reply('Link this chat first: /login <group_slug>')
 
   const season = await prisma.season.findFirst({
     where: { groupId: group.id, status: 'ACTIVE' },
