@@ -20,6 +20,23 @@ export async function sendVerificationEmail(
   })
 }
 
+export async function sendInvitationEmail(
+  to: string,
+  playerName: string,
+  groupName: string,
+  token: string,
+): Promise<void> {
+  const url = `${process.env.FRONTEND_URL}/join?token=${token}`
+  const resend = getResend()
+  await resend.emails.send({
+    from: process.env.EMAIL_FROM ?? 'noreply@continental.app',
+    to,
+    subject: `You've been invited to join ${groupName} on Continental`,
+    text: `Hi ${playerName},\n\nYou've been invited to join ${groupName}.\n\nAccept your invitation: ${url}\n\nLink expires in 7 days.`,
+    html: `<p>Hi ${playerName},</p><p>You've been invited to join <strong>${groupName}</strong>.</p><p><a href="${url}">Accept invitation</a></p><p>Link expires in 7 days.</p>`,
+  })
+}
+
 export async function sendPasswordResetEmail(
   to: string,
   name: string,

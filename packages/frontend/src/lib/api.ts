@@ -67,6 +67,8 @@ export interface Player {
   active: boolean
   createdAt: string
   role?: 'OWNER' | 'ADMIN' | 'MEMBER'
+  userId?: string | null
+  inviteToken?: string | null
 }
 
 export interface GroupSettings {
@@ -74,6 +76,11 @@ export interface GroupSettings {
   name: string
   slug: string
   currency: 'GBP' | 'EUR' | 'USD'
+}
+
+export interface InvitationPreview {
+  playerName: string
+  groupName: string
 }
 
 export interface Season {

@@ -20,6 +20,7 @@ import VerifyEmail from '@/pages/VerifyEmail'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import PickGroup from '@/pages/PickGroup'
+import Join from '@/pages/Join'
 
 function AppRoot() {
   const { user, isLoading } = useAuth()
@@ -47,6 +48,7 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/pick-group" element={<PickGroup />} />
+      <Route path="/join" element={<Join />} />
 
       <Route
         path="/dashboard"
