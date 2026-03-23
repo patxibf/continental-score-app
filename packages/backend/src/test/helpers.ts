@@ -4,10 +4,12 @@ import fastifyJwt from '@fastify/jwt'
 import authPlugin from '../plugins/auth.js'
 import authRoutes from '../routes/auth.js'
 import adminRoutes from '../routes/admin.js'
+import groupRoutes from '../routes/groups.js'
 import roundRoutes from '../routes/rounds.js'
 import seasonRoutes from '../routes/seasons.js'
 import statsRoutes from '../routes/stats.js'
 import gameRoutes from '../routes/games.js'
+import playerRoutes from '../routes/players.js'
 
 export async function buildApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false })
@@ -20,21 +22,35 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(authPlugin)
   await app.register(authRoutes)
   await app.register(adminRoutes)
+  await app.register(groupRoutes)
   await app.register(roundRoutes)
   await app.register(seasonRoutes)
   await app.register(statsRoutes)
   await app.register(gameRoutes)
+  await app.register(playerRoutes)
 
   await app.ready()
   return app
 }
 
-export function groupToken(app: FastifyInstance, groupId = 'group-1'): string {
-  return app.jwt.sign({ role: 'group', groupId, groupAccess: 'admin' })
+// Group user with owner role (equivalent to old groupToken admin)
+export function groupToken(
+  app: FastifyInstance,
+  groupId = 'group-1',
+  groupRole: 'owner' | 'admin' | 'member' = 'owner',
+): string {
+  return app.jwt.sign({
+    role: 'user',
+    userId: 'user-1',
+    playerId: 'player-1',
+    groupId,
+    groupRole,
+  })
 }
 
+// Member token (read-only)
 export function memberToken(app: FastifyInstance, groupId = 'group-1'): string {
-  return app.jwt.sign({ role: 'group', groupId, groupAccess: 'member' })
+  return groupToken(app, groupId, 'member')
 }
 
 export function adminToken(app: FastifyInstance, adminId = 'admin-1'): string {

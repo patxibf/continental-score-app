@@ -3,13 +3,13 @@ import { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify'
 
 export type JWTPayload =
   | { role: 'admin'; adminId: string }
-  | { role: 'group'; groupId: string; groupAccess: 'admin' | 'member' }
+  | { role: 'user'; userId: string; playerId: string; groupId: string; groupRole: 'owner' | 'admin' | 'member' }
 
 const authPlugin: FastifyPluginAsync = async (fastify) => {
   fastify.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       await request.jwtVerify()
-    } catch (err) {
+    } catch {
       reply.status(401).send({ error: 'Unauthorized' })
     }
   })
@@ -18,9 +18,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     try {
       await request.jwtVerify()
       const payload = request.user as JWTPayload
-      if (payload.role !== 'admin') {
-        reply.status(403).send({ error: 'Forbidden' })
-      }
+      if (payload.role !== 'admin') reply.status(403).send({ error: 'Forbidden' })
     } catch {
       reply.status(401).send({ error: 'Unauthorized' })
     }
@@ -30,9 +28,7 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     try {
       await request.jwtVerify()
       const payload = request.user as JWTPayload
-      if (payload.role !== 'group') {
-        reply.status(403).send({ error: 'Forbidden' })
-      }
+      if (payload.role !== 'user') reply.status(403).send({ error: 'Forbidden' })
     } catch {
       reply.status(401).send({ error: 'Unauthorized' })
     }
@@ -42,12 +38,24 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
     try {
       await request.jwtVerify()
       const payload = request.user as JWTPayload
-      if (payload.role !== 'group') {
+      if (payload.role !== 'user') {
         reply.status(403).send({ error: 'Forbidden' })
         return
       }
-      if (payload.groupAccess !== 'admin') {
+      if (payload.groupRole !== 'owner' && payload.groupRole !== 'admin') {
         reply.status(403).send({ error: 'Forbidden: admin access required' })
+      }
+    } catch {
+      reply.status(401).send({ error: 'Unauthorized' })
+    }
+  })
+
+  fastify.decorate('requireGroupOwner', async (request: FastifyRequest, reply: FastifyReply) => {
+    try {
+      await request.jwtVerify()
+      const payload = request.user as JWTPayload
+      if (payload.role !== 'user' || payload.groupRole !== 'owner') {
+        reply.status(403).send({ error: 'Forbidden: owner access required' })
       }
     } catch {
       reply.status(401).send({ error: 'Unauthorized' })
@@ -61,6 +69,7 @@ declare module 'fastify' {
     requireAdmin: (request: FastifyRequest, reply: FastifyReply) => Promise<void>
     requireGroup: (request: FastifyRequest, reply: FastifyReply) => Promise<void>
     requireGroupAdmin: (request: FastifyRequest, reply: FastifyReply) => Promise<void>
+    requireGroupOwner: (request: FastifyRequest, reply: FastifyReply) => Promise<void>
   }
 }
 
