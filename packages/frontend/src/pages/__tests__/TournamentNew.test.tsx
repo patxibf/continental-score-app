@@ -126,7 +126,7 @@ describe('TournamentNew wizard — steps 3 & 4', () => {
     await advanceToStep3()
     fireEvent.click(await screen.findByRole('button', { name: /next/i })) // step 3 → 4
     expect(await screen.findByText('Test')).toBeInTheDocument()
-    expect(await screen.findByText(/round 1/i)).toBeInTheDocument()
+    expect(await screen.findByText(/stage 1/i)).toBeInTheDocument()
     expect(await screen.findByText(/final/i)).toBeInTheDocument()
     expect(await screen.findByRole('button', { name: /start tournament/i })).toBeInTheDocument()
   })

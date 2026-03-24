@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAuth } from '@/hooks/useAuth'
+import { toast } from '@/hooks/useToast'
 import { api, Tournament, TournamentStage, TournamentTable, TournamentTablePlayer } from '@/lib/api'
 import { ChevronRight, Trophy } from 'lucide-react'
 
@@ -92,6 +93,9 @@ export default function TournamentDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tournament', id] })
       setShowModal(false)
+    },
+    onError: () => {
+      toast({ title: 'Failed to advance stage. Please try again.', variant: 'destructive' })
     },
   })
 

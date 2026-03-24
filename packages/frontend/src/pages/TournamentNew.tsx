@@ -78,7 +78,7 @@ export default function TournamentNew() {
     return (
       <div className="space-y-6 fade-up">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Step 1 of 2</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Step 1 of 4</p>
           <h1 className="text-4xl font-bold text-[var(--cobalt)]">New Tournament</h1>
           <p className="text-sm text-muted-foreground mt-1">Name your tournament and select players</p>
         </div>
@@ -148,7 +148,7 @@ export default function TournamentNew() {
     return (
       <div className="space-y-6 fade-up">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Step 2 of 2</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-0.5">Step 2 of 4</p>
           <h1 className="text-4xl font-bold text-[var(--cobalt)]">Bracket Preview</h1>
           <p className="text-sm text-muted-foreground mt-1">Review and confirm your tournament structure</p>
         </div>
@@ -223,7 +223,7 @@ export default function TournamentNew() {
             return (
               <div key={stage.stageNumber} className="felt-card p-4 rounded-xl border border-border">
                 <p className="text-sm font-semibold text-foreground mb-3">
-                  {isFinal ? 'Final' : `Round ${stage.stageNumber}`}
+                  {isFinal ? 'Final' : `Stage ${stage.stageNumber}`}
                 </p>
                 <div className="flex gap-1 mb-2">
                   {[1, 2, 3, 4, 5, 6, 7].map(r => {
@@ -285,7 +285,7 @@ export default function TournamentNew() {
             return (
               <div key={stage.stageNumber} className="felt-card p-4 rounded-xl border border-border flex justify-between items-center">
                 <p className="font-semibold text-foreground">
-                  {isFinal ? 'Final' : `Round ${stage.stageNumber}`}
+                  {isFinal ? 'Final' : `Stage ${stage.stageNumber}`}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   Rounds {cfg.startRound}–{cfg.endRound}
