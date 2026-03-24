@@ -16,6 +16,7 @@ import seasonRoutes from './routes/seasons.js'
 import gameRoutes from './routes/games.js'
 import roundRoutes from './routes/rounds.js'
 import statsRoutes from './routes/stats.js'
+import tournamentRoutes from './routes/tournaments.js'
 
 const fastify = Fastify({
   logger: {
@@ -55,6 +56,7 @@ const start = async () => {
   await fastify.register(gameRoutes)
   await fastify.register(roundRoutes)
   await fastify.register(statsRoutes)
+  await fastify.register(tournamentRoutes)
 
   fastify.get('/health', async () => ({ status: 'ok' }))
 
