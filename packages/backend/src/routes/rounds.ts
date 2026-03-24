@@ -1,7 +1,7 @@
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
-import { TOTAL_ROUNDS, getRoundInfo } from '../lib/gameRules.js'
+import { TOTAL_ROUNDS, whereGameForGroup } from '../lib/gameRules.js'
 
 const scoreSchema = z.object({
   playerId: z.string(),
@@ -16,17 +16,6 @@ const submitRoundSchema = z.object({
 })
 
 const roundRoutes: FastifyPluginAsync = async (fastify) => {
-  // Helper: find a game that belongs to this group, whether via season or direct groupId
-  function whereGameForGroup(id: string, groupId: string) {
-    return {
-      id,
-      OR: [
-        { season: { groupId } },
-        { groupId },
-      ],
-    } as const
-  }
-
   fastify.get(
     '/api/games/:gameId/rounds',
     { preHandler: [fastify.requireGroup] },
@@ -205,9 +194,9 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
           },
         },
       })
-      const deleteGameGroupId = round?.game.groupId ?? round?.game.season?.groupId
+      const gameGroupId = round?.game.groupId ?? round?.game.season?.groupId
 
-      if (!round || deleteGameGroupId !== groupId) return reply.status(404).send({ error: 'Round not found' })
+      if (!round || gameGroupId !== groupId) return reply.status(404).send({ error: 'Round not found' })
       if (round.game.status === 'CLOSED') return reply.status(403).send({ error: 'Game is closed' })
       if (round.game.rounds[0].id !== id) {
         return reply.status(400).send({ error: 'Can only undo the last round' })

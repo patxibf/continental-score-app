@@ -1,3 +1,15 @@
+import type { Prisma } from '@prisma/client'
+
+export function whereGameForGroup(id: string, groupId: string): Prisma.GameWhereInput {
+  return {
+    id,
+    OR: [
+      { season: { groupId } },
+      { groupId },
+    ],
+  }
+}
+
 export const ROUNDS = [
   { roundNumber: 1, cardsDealt: 7, description: 'Two trios' },
   { roundNumber: 2, cardsDealt: 8, description: 'One trio + one run' },

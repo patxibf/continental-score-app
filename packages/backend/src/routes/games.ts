@@ -1,24 +1,13 @@
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { prisma } from '../lib/prisma.js'
-import { TOTAL_ROUNDS } from '../lib/gameRules.js'
+import { TOTAL_ROUNDS, whereGameForGroup } from '../lib/gameRules.js'
 
 const createGameSchema = z.object({
   playerIds: z.array(z.string()).min(2).max(8),
 })
 
 const gameRoutes: FastifyPluginAsync = async (fastify) => {
-  // Helper: find a game that belongs to this group, whether via season or direct groupId
-  function whereGameForGroup(id: string, groupId: string) {
-    return {
-      id,
-      OR: [
-        { season: { groupId } },
-        { groupId },
-      ],
-    } as const
-  }
-
   fastify.get(
     '/api/seasons/:seasonId/games',
     { preHandler: [fastify.requireGroup] },

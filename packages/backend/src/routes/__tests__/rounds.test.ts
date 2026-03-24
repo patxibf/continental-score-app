@@ -241,6 +241,30 @@ describe('PATCH /api/rounds/:id', () => {
 
     expect(res.statusCode).toBe(400)
   })
+
+  it('resolves groupId from game.groupId directly (no season)', async () => {
+    vi.mocked(prisma.round.findFirst).mockResolvedValueOnce({
+      id: 'r1',
+      roundNumber: 2,
+      game: { status: 'IN_PROGRESS', groupId: 'group-1', season: null },
+    } as any)
+    vi.mocked(prisma.roundScore.deleteMany).mockResolvedValueOnce({} as any)
+    vi.mocked(prisma.round.update).mockResolvedValueOnce({ id: 'r1', roundNumber: 2, scores: [] } as any)
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/rounds/r1',
+      payload: {
+        scores: [
+          { playerId: 'p1', points: 10, wentOut: false, wentOutInOneGo: false },
+          { playerId: 'p2', points: 20, wentOut: false, wentOutInOneGo: false },
+        ],
+      },
+      cookies: { token: groupToken(app) },
+    })
+
+    expect(res.statusCode).toBe(200)
+  })
 })
 
 describe('DELETE /api/rounds/:id', () => {
