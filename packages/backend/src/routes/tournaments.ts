@@ -143,7 +143,86 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
     },
   )
 
-  // GET /api/tournaments and GET /api/tournaments/:id added in Task 5
+  fastify.get(
+    '/api/tournaments',
+    { preHandler: [fastify.requireGroup] },
+    async (request, reply) => {
+      const { groupId } = request.user as { groupId: string }
+
+      const tournaments = await prisma.tournament.findMany({
+        where: { groupId },
+        orderBy: { createdAt: 'desc' },
+        include: { participants: { select: { id: true } } },
+      })
+
+      return reply.send(tournaments)
+    },
+  )
+
+  fastify.get(
+    '/api/tournaments/:id',
+    { preHandler: [fastify.requireGroup] },
+    async (request, reply) => {
+      const { groupId } = request.user as { groupId: string }
+      const { id } = request.params as { id: string }
+
+      const tournament = await prisma.tournament.findFirst({
+        where: { id, groupId },
+        include: {
+          participants: { include: { player: { select: { id: true, name: true, avatar: true } } } },
+          stages: {
+            orderBy: { stageNumber: 'asc' },
+            include: {
+              tables: {
+                orderBy: { tableNumber: 'asc' },
+                include: {
+                  players: {
+                    include: { player: { select: { id: true, name: true, avatar: true } } },
+                  },
+                  game: {
+                    include: {
+                      rounds: {
+                        include: { scores: true },
+                        orderBy: { roundNumber: 'asc' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      })
+
+      if (!tournament) {
+        return reply.status(404).send({ error: 'Tournament not found' })
+      }
+
+      // Attach per-player score totals to each table player
+      const stagesWithTotals = tournament.stages.map(stage => ({
+        ...stage,
+        tables: stage.tables.map(table => {
+          const totals: Record<string, number> = {}
+          if (table.game) {
+            for (const round of table.game.rounds) {
+              for (const score of round.scores) {
+                totals[score.playerId] = (totals[score.playerId] ?? 0) + score.points
+              }
+            }
+          }
+          return {
+            ...table,
+            players: table.players.map(tp => ({
+              ...tp,
+              score: tp.playerId ? (totals[tp.playerId] ?? null) : null,
+            })),
+          }
+        }),
+      }))
+
+      return reply.send({ ...tournament, stages: stagesWithTotals })
+    },
+  )
 }
 
 export default tournamentRoutes

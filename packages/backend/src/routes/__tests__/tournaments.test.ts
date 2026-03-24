@@ -133,3 +133,72 @@ describe('POST /api/tournaments', () => {
     expect(res.statusCode).toBe(403)
   })
 })
+
+describe('GET /api/tournaments', () => {
+  let app: FastifyInstance
+  beforeEach(async () => { app = await buildApp() })
+  afterEach(async () => { await app?.close(); vi.resetAllMocks() })
+
+  it('returns list of tournaments for group', async () => {
+    const token = groupToken(app)
+
+    mockPrisma.tournament.findMany.mockResolvedValue([
+      { id: 't-1', name: 'Cup', status: 'IN_PROGRESS', createdAt: new Date(), participants: [{ id: 'p1' }] },
+    ])
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/tournaments',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(JSON.parse(res.body)).toHaveLength(1)
+  })
+
+  it('returns 401 without auth', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/tournaments' })
+    expect(res.statusCode).toBe(401)
+  })
+})
+
+describe('GET /api/tournaments/:id', () => {
+  let app: FastifyInstance
+  beforeEach(async () => { app = await buildApp() })
+  afterEach(async () => { await app?.close(); vi.resetAllMocks() })
+
+  it('returns tournament detail with stages and tables', async () => {
+    const token = groupToken(app)
+
+    mockPrisma.tournament.findFirst.mockResolvedValue({
+      id: 't-1',
+      groupId: 'group-1',
+      name: 'Cup',
+      status: 'IN_PROGRESS',
+      stages: [],
+      participants: [],
+    })
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/tournaments/t-1',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+  })
+
+  it('returns 404 for tournament not in group', async () => {
+    const token = groupToken(app)
+
+    mockPrisma.tournament.findFirst.mockResolvedValue(null)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/api/tournaments/not-found',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(404)
+  })
+})
