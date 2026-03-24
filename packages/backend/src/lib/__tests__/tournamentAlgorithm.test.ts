@@ -34,7 +34,7 @@ describe('computeBracket', () => {
   })
 
   it('all intermediate stages have tables of 3–6 players', () => {
-    for (const n of [7, 8, 9, 10, 11, 13, 15, 16, 18, 24, 32]) {
+    for (let n = 7; n <= 32; n++) {
       const stages = computeBracket(n)
       for (const s of stages) {
         expect(s.playersPerTable, `n=${n}`).toBeGreaterThanOrEqual(3)
