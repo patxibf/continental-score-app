@@ -31,14 +31,13 @@ async function onGameClosed(gameId: string) {
   )
   if (!allDone) return
 
-  // Mark stage complete
-  await prisma.tournamentStage.update({
-    where: { id: table.stage.id },
-    data: { status: 'COMPLETED' },
-  })
-
-  // If this is the final stage (advancePerTable = 0), mark tournament complete
+  // Only cascade stage/tournament completion for the final stage
+  // (intermediate stage status is managed by the advance endpoint)
   if (table.stage.advancePerTable === 0) {
+    await prisma.tournamentStage.update({
+      where: { id: table.stage.id },
+      data: { status: 'COMPLETED' },
+    })
     await prisma.tournament.update({
       where: { id: table.stage.tournamentId },
       data: { status: 'COMPLETED' },

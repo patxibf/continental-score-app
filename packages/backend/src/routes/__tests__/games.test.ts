@@ -365,6 +365,84 @@ describe('POST /api/games/:id/close — tournament table', () => {
       expect.objectContaining({ data: { status: 'COMPLETED' } }),
     )
   })
+
+  it('does nothing to tournament models when game has no linked TournamentTable', async () => {
+    const token = groupToken(app)
+
+    vi.mocked(prisma.game.findFirst).mockResolvedValueOnce({
+      id: 'game-1',
+      groupId: 'group-1',
+      seasonId: null,
+      season: null,
+      status: 'IN_PROGRESS',
+      startRound: null,
+      endRound: null,
+      totalPot: null,
+      rounds: [
+        { scores: [] }, { scores: [] }, { scores: [] },
+        { scores: [] }, { scores: [] }, { scores: [] },
+        { scores: [] }, // 7 rounds
+      ],
+      players: [],
+    } as any)
+    vi.mocked(prisma.tournamentTable.findFirst).mockResolvedValueOnce(null) // not a tournament game
+    vi.mocked(prisma.game.update).mockResolvedValueOnce({ id: 'game-1', status: 'CLOSED' } as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/games/game-1/close',
+      headers: { cookie: `token=${token}`, 'content-type': 'application/json' },
+      payload: JSON.stringify({ confirm: true }),
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(vi.mocked(prisma.tournamentTable.update)).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.tournamentStage.update)).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.tournament.update)).not.toHaveBeenCalled()
+  })
+
+  it('does not update tournament or stage when non-final stage table completes', async () => {
+    const token = groupToken(app)
+
+    vi.mocked(prisma.game.findFirst).mockResolvedValueOnce({
+      id: 'game-1',
+      groupId: 'group-1',
+      seasonId: null,
+      season: null,
+      status: 'IN_PROGRESS',
+      startRound: 5,
+      endRound: 7,
+      totalPot: null,
+      rounds: [{ scores: [] }, { scores: [] }, { scores: [] }],
+      players: [],
+    } as any)
+    vi.mocked(prisma.tournamentTable.findFirst).mockResolvedValueOnce({
+      id: 'table-1',
+      stageId: 'stage-1',
+      stage: {
+        id: 'stage-1',
+        advancePerTable: 2, // intermediate stage
+        tournamentId: 't-1',
+        tables: [{ id: 'table-1', status: 'IN_PROGRESS' }], // only table, so allDone=true
+      },
+    } as any)
+    vi.mocked(prisma.game.update).mockResolvedValueOnce({ id: 'game-1', status: 'CLOSED' } as any)
+    vi.mocked(prisma.tournamentTable.update).mockResolvedValueOnce({} as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/games/game-1/close',
+      headers: { cookie: `token=${token}`, 'content-type': 'application/json' },
+      payload: JSON.stringify({ confirm: true }),
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(vi.mocked(prisma.tournamentTable.update)).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: 'COMPLETED' } }),
+    )
+    expect(vi.mocked(prisma.tournamentStage.update)).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.tournament.update)).not.toHaveBeenCalled()
+  })
 })
 
 describe('POST /api/seasons/:seasonId/games — totalPot', () => {
