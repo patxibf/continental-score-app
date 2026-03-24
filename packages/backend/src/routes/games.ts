@@ -26,6 +26,8 @@ async function onGameClosed(gameId: string) {
   })
 
   // Check if all tables in the stage are now complete
+  // t.id === table.id: skip self — the DB update above already set it
+  // COMPLETED but the fetched snapshot still shows the old status
   const allDone = table.stage.tables.every(
     (t: { id: string; status: string }) => t.id === table.id || t.status === 'COMPLETED',
   )
@@ -210,6 +212,10 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
             where: { id },
             data: { status: 'CLOSED', closedAt: new Date() },
           })
+          // NOTE: onGameClosed runs outside the game-close transaction. If it fails
+          // after the game is already CLOSED, the TournamentTable is left IN_PROGRESS.
+          // This is an accepted trade-off; re-running close is not supported, so a DB
+          // error here requires manual repair.
           await onGameClosed(id)
           return reply.status(200).send(closed)
         }

@@ -361,6 +361,9 @@ describe('POST /api/games/:id/close — tournament table', () => {
     expect(vi.mocked(prisma.tournamentTable.update)).toHaveBeenCalledWith(
       expect.objectContaining({ data: { status: 'COMPLETED' } }),
     )
+    expect(vi.mocked(prisma.tournamentStage.update)).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: 'COMPLETED' } }),
+    )
     expect(vi.mocked(prisma.tournament.update)).toHaveBeenCalledWith(
       expect.objectContaining({ data: { status: 'COMPLETED' } }),
     )
