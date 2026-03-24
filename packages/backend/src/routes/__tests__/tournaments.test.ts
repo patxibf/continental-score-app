@@ -202,3 +202,126 @@ describe('GET /api/tournaments/:id', () => {
     expect(res.statusCode).toBe(404)
   })
 })
+
+describe('POST /api/tournaments/:id/stages/:stageId/advance', () => {
+  let app: FastifyInstance
+  beforeEach(async () => { app = await buildApp(); vi.resetAllMocks() })
+  afterEach(async () => { await app?.close() })
+
+  const mockStage = {
+    id: 'stage-1',
+    tournamentId: 't-1',
+    stageNumber: 1,
+    startRound: 5,
+    endRound: 7,
+    advancePerTable: 3,
+    status: 'IN_PROGRESS',
+    tables: [
+      {
+        id: 'table-1',
+        stageId: 'stage-1',
+        tableNumber: 1,
+        status: 'COMPLETED',
+        gameId: 'game-1',
+        game: {
+          rounds: [
+            { scores: [{ playerId: 'p1', points: 30 }, { playerId: 'p2', points: 50 }, { playerId: 'p3', points: 40 }] },
+            { scores: [{ playerId: 'p1', points: 20 }, { playerId: 'p2', points: 40 }, { playerId: 'p3', points: 30 }] },
+          ],
+        },
+        players: [
+          { playerId: 'p1', isBye: false, advanced: false },
+          { playerId: 'p2', isBye: false, advanced: false },
+          { playerId: 'p3', isBye: false, advanced: false },
+        ],
+      },
+    ],
+    tournament: { id: 't-1', groupId: 'group-1', stages: [{ stageNumber: 1 }, { stageNumber: 2 }] },
+  }
+
+  it('advances players and creates next stage tables', async () => {
+    const token = groupToken(app)
+
+    mockPrisma.tournamentStage.findFirst.mockResolvedValue(mockStage)
+    mockPrisma.$transaction.mockImplementation((cb: any) => cb(mockPrisma))
+    mockPrisma.tournamentTablePlayer.updateMany.mockResolvedValue({})
+    mockPrisma.tournamentStage.update.mockResolvedValue({})
+    mockPrisma.tournamentStage.findFirst
+      .mockResolvedValueOnce(mockStage)  // first call: fetch stage
+    // second call inside tx: find next stage
+    mockPrisma.tournamentStage.findFirst.mockResolvedValueOnce({ id: 'stage-2' })
+    mockPrisma.tournamentTable.create.mockResolvedValue({})
+    mockPrisma.tournament.findFirst.mockResolvedValue({ id: 't-1', stages: [] })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tournaments/t-1/stages/stage-1/advance',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+  })
+
+  it('returns 400 if called on final stage (advancePerTable=0)', async () => {
+    const token = groupToken(app)
+
+    mockPrisma.tournamentStage.findFirst.mockResolvedValue({
+      ...mockStage,
+      advancePerTable: 0,
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tournaments/t-1/stages/stage-1/advance',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 if not all tables are completed', async () => {
+    const token = groupToken(app)
+
+    mockPrisma.tournamentStage.findFirst.mockResolvedValue({
+      ...mockStage,
+      tables: [{ ...mockStage.tables[0], status: 'IN_PROGRESS' }],
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tournaments/t-1/stages/stage-1/advance',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 403 for non-admin', async () => {
+    const token = memberToken(app)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tournaments/t-1/stages/stage-1/advance',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(403)
+  })
+
+  it('returns 400 if stage is already completed', async () => {
+    const token = groupToken(app)
+
+    mockPrisma.tournamentStage.findFirst.mockResolvedValue({
+      ...mockStage,
+      status: 'COMPLETED',
+    })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tournaments/t-1/stages/stage-1/advance',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(400)
+  })
+})

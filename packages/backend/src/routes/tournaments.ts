@@ -223,6 +223,120 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.send({ ...tournament, stages: stagesWithTotals })
     },
   )
+
+  fastify.post(
+    '/api/tournaments/:id/stages/:stageId/advance',
+    { preHandler: [fastify.requireGroupAdmin] },
+    async (request, reply) => {
+      const { groupId } = request.user as { groupId: string }
+      const { id, stageId } = request.params as { id: string; stageId: string }
+
+      const stage = await prisma.tournamentStage.findFirst({
+        where: { id: stageId, tournament: { id, groupId } },
+        include: {
+          tables: {
+            include: {
+              players: true,
+              game: { include: { rounds: { include: { scores: true } } } },
+            },
+          },
+          tournament: { include: { stages: { select: { stageNumber: true }, orderBy: { stageNumber: 'asc' } } } },
+        },
+      })
+
+      if (!stage) return reply.status(404).send({ error: 'Stage not found' })
+      if (stage.advancePerTable === 0) {
+        return reply.status(400).send({ error: 'Cannot advance from the final stage' })
+      }
+      if (stage.status !== 'IN_PROGRESS') {
+        return reply.status(400).send({ error: 'Stage is not in progress' })
+      }
+      if (stage.tables.some(t => t.status !== 'COMPLETED')) {
+        return reply.status(400).send({ error: 'All tables must be completed before advancing' })
+      }
+
+      // Compute totals per table, rank players, collect advancing set
+      const advancing: string[] = []
+      for (const table of stage.tables) {
+        const totals: Record<string, number> = {}
+        for (const round of table.game?.rounds ?? []) {
+          for (const score of round.scores) {
+            totals[score.playerId] = (totals[score.playerId] ?? 0) + score.points
+          }
+        }
+        const realPlayers = table.players
+          .filter(p => !p.isBye && p.playerId)
+          .sort((a, b) => (totals[a.playerId!] ?? 0) - (totals[b.playerId!] ?? 0))
+
+        // Take top advancePerTable, including all tied players at the boundary
+        const cutoff = stage.advancePerTable - 1
+        const cutoffScore = realPlayers[cutoff] != null ? totals[realPlayers[cutoff].playerId!] : Infinity
+        const advanced = realPlayers.filter(
+          (p, i) => i < stage.advancePerTable || totals[p.playerId!] === cutoffScore,
+        )
+        advancing.push(...advanced.map(p => p.playerId!))
+      }
+
+      // Find next stage number
+      const nextStageNumber = stage.stageNumber + 1
+
+      // Re-split advancing players using bracket algorithm
+      const nextBracket = computeBracket(advancing.length)
+      const nextDesc = nextBracket[0]
+      const shuffled = [...advancing].sort(() => Math.random() - 0.5)
+
+      const tournament = await prisma.$transaction(async (tx) => {
+        // Mark advancing players
+        await tx.tournamentTablePlayer.updateMany({
+          where: { tableId: { in: stage.tables.map(t => t.id) }, playerId: { in: advancing } },
+          data: { advanced: true },
+        })
+        // Mark current stage COMPLETED
+        await tx.tournamentStage.update({ where: { id: stageId }, data: { status: 'COMPLETED' } })
+
+        // Find next stage record and activate it
+        const nextStage = await tx.tournamentStage.findFirst({
+          where: { tournamentId: id, stageNumber: nextStageNumber },
+        })
+        if (!nextStage) throw new Error('Next stage not found')
+
+        await tx.tournamentStage.update({
+          where: { id: nextStage.id },
+          data: { status: 'IN_PROGRESS' },
+        })
+
+        // Create tables for next stage
+        for (let tableIndex = 0; tableIndex < nextDesc.tableCount; tableIndex++) {
+          const tablePlayers = shuffled.slice(
+            tableIndex * nextDesc.playersPerTable,
+            (tableIndex + 1) * nextDesc.playersPerTable,
+          )
+          await tx.tournamentTable.create({
+            data: {
+              stageId: nextStage.id,
+              tableNumber: tableIndex + 1,
+              status: 'PENDING',
+              players: {
+                create: tablePlayers.map(pid => ({ playerId: pid, isBye: false })),
+              },
+            },
+          })
+        }
+
+        return tx.tournament.findFirst({
+          where: { id },
+          include: {
+            stages: {
+              orderBy: { stageNumber: 'asc' },
+              include: { tables: { include: { players: true } } },
+            },
+          },
+        })
+      })
+
+      return reply.send(tournament)
+    },
+  )
 }
 
 export default tournamentRoutes
