@@ -148,6 +148,65 @@ export interface Standing {
   totalEarnings: number
 }
 
+export interface BracketStagePreview {
+  stageNumber: number
+  tableCount: number
+  playersPerTable: number
+  advancePerTable: number
+}
+
+export interface BracketPreview {
+  stages: BracketStagePreview[]
+}
+
+export interface TournamentSummary {
+  id: string
+  name: string
+  status: 'IN_PROGRESS' | 'COMPLETED'
+  playerCount: number
+  createdAt: string
+}
+
+export interface TournamentTablePlayer {
+  id: string
+  tableId: string
+  playerId: string | null
+  player: Player | null
+  isBye: boolean
+  advanced: boolean
+  score?: number
+}
+
+export interface TournamentTable {
+  id: string
+  stageId: string
+  tableNumber: number
+  gameId: string | null
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
+  players: TournamentTablePlayer[]
+}
+
+export interface TournamentStage {
+  id: string
+  tournamentId: string
+  stageNumber: number
+  startRound: number
+  endRound: number
+  advancePerTable: number
+  status: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED'
+  tables: TournamentTable[]
+}
+
+export interface Tournament {
+  id: string
+  groupId: string
+  name: string
+  status: 'IN_PROGRESS' | 'COMPLETED'
+  createdAt: string
+  participants: { id: string; playerId: string; player: Player }[]
+  stages: TournamentStage[]
+}
+
 export interface Group {
   id: string
   name: string
@@ -175,3 +234,21 @@ export interface H2HResult {
   winsB: number
   ties: number
 }
+
+export const getTournamentPreview = (playerCount: number) =>
+  api.get<BracketPreview>(`/tournaments/preview?playerCount=${playerCount}`)
+
+export const listTournaments = () =>
+  api.get<TournamentSummary[]>('/tournaments')
+
+export const getTournament = (id: string) =>
+  api.get<Tournament>(`/tournaments/${id}`)
+
+export const createTournament = (body: {
+  name: string
+  playerIds: string[]
+  stageConfigs: { startRound: number; endRound: number }[]
+}) => api.post<Tournament>('/tournaments', body)
+
+export const advanceTournamentStage = (tournamentId: string, stageId: string) =>
+  api.post<Tournament>(`/tournaments/${tournamentId}/stages/${stageId}/advance`, {})
