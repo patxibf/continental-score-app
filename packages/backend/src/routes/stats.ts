@@ -125,8 +125,8 @@ const statsRoutes: FastifyPluginAsync = async (fastify) => {
 
         return {
           gameId: game.id,
-          seasonId: game.season.id,
-          seasonName: game.season.name,
+          seasonId: game.season?.id ?? null,
+          seasonName: game.season?.name ?? null,
           totalPoints: total,
           roundsPlayed: game.rounds.length,
           date: game.createdAt,

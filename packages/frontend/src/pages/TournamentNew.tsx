@@ -42,7 +42,7 @@ export default function TournamentNew() {
     try {
       const result = await getTournamentPreview(selectedIds.size)
       setPreview(result)
-      const configs = result.stages.map((stage, idx) => {
+      const configs = result.stages.map((_stage, idx) => {
         const isFinal = idx === result.stages.length - 1
         return isFinal
           ? { startRound: 1, endRound: 7 }
