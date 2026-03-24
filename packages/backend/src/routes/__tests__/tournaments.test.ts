@@ -242,14 +242,12 @@ describe('POST /api/tournaments/:id/stages/:stageId/advance', () => {
   it('advances players and creates next stage tables', async () => {
     const token = groupToken(app)
 
-    mockPrisma.tournamentStage.findFirst.mockResolvedValue(mockStage)
+    mockPrisma.tournamentStage.findFirst
+      .mockResolvedValueOnce(mockStage)       // first call: fetch current stage
+      .mockResolvedValueOnce({ id: 'stage-2' })   // second call: fetch next stage in transaction
     mockPrisma.$transaction.mockImplementation((cb: any) => cb(mockPrisma))
     mockPrisma.tournamentTablePlayer.updateMany.mockResolvedValue({})
     mockPrisma.tournamentStage.update.mockResolvedValue({})
-    mockPrisma.tournamentStage.findFirst
-      .mockResolvedValueOnce(mockStage)  // first call: fetch stage
-    // second call inside tx: find next stage
-    mockPrisma.tournamentStage.findFirst.mockResolvedValueOnce({ id: 'stage-2' })
     mockPrisma.tournamentTable.create.mockResolvedValue({})
     mockPrisma.tournament.findFirst.mockResolvedValue({ id: 't-1', stages: [] })
 
@@ -260,6 +258,9 @@ describe('POST /api/tournaments/:id/stages/:stageId/advance', () => {
     })
 
     expect(res.statusCode).toBe(200)
+    expect(mockPrisma.tournamentTable.create).toHaveBeenCalledTimes(1)
+    expect(mockPrisma.tournamentStage.update).toHaveBeenCalledTimes(2)
+    expect(mockPrisma.tournamentTablePlayer.updateMany).toHaveBeenCalledTimes(1)
   })
 
   it('returns 400 if called on final stage (advancePerTable=0)', async () => {

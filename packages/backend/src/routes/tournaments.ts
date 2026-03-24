@@ -265,16 +265,16 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
           }
         }
         const realPlayers = table.players
-          .filter(p => !p.isBye && p.playerId)
-          .sort((a, b) => (totals[a.playerId!] ?? 0) - (totals[b.playerId!] ?? 0))
+          .filter((p): p is typeof p & { playerId: string } => !p.isBye && p.playerId != null)
+          .sort((a, b) => (totals[a.playerId] ?? 0) - (totals[b.playerId] ?? 0))
 
         // Take top advancePerTable, including all tied players at the boundary
         const cutoff = stage.advancePerTable - 1
-        const cutoffScore = realPlayers[cutoff] != null ? totals[realPlayers[cutoff].playerId!] : Infinity
+        const cutoffScore = realPlayers[cutoff] != null ? totals[realPlayers[cutoff].playerId] : Infinity
         const advanced = realPlayers.filter(
-          (p, i) => i < stage.advancePerTable || totals[p.playerId!] === cutoffScore,
+          (p, i) => i < stage.advancePerTable || totals[p.playerId] === cutoffScore,
         )
-        advancing.push(...advanced.map(p => p.playerId!))
+        advancing.push(...advanced.map(p => p.playerId))
       }
 
       // Find next stage number
@@ -285,54 +285,62 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
       const nextDesc = nextBracket[0]
       const shuffled = [...advancing].sort(() => Math.random() - 0.5)
 
-      const tournament = await prisma.$transaction(async (tx) => {
-        // Mark advancing players
-        await tx.tournamentTablePlayer.updateMany({
-          where: { tableId: { in: stage.tables.map(t => t.id) }, playerId: { in: advancing } },
-          data: { advanced: true },
-        })
-        // Mark current stage COMPLETED
-        await tx.tournamentStage.update({ where: { id: stageId }, data: { status: 'COMPLETED' } })
+      let tournament
+      try {
+        tournament = await prisma.$transaction(async (tx) => {
+          // Mark advancing players
+          await tx.tournamentTablePlayer.updateMany({
+            where: { tableId: { in: stage.tables.map(t => t.id) }, playerId: { in: advancing } },
+            data: { advanced: true },
+          })
+          // Mark current stage COMPLETED
+          await tx.tournamentStage.update({ where: { id: stageId }, data: { status: 'COMPLETED' } })
 
-        // Find next stage record and activate it
-        const nextStage = await tx.tournamentStage.findFirst({
-          where: { tournamentId: id, stageNumber: nextStageNumber },
-        })
-        if (!nextStage) throw new Error('Next stage not found')
+          // Find next stage record and activate it
+          const nextStage = await tx.tournamentStage.findFirst({
+            where: { tournamentId: id, stageNumber: nextStageNumber },
+          })
+          if (!nextStage) throw new Error('Next stage not found')
 
-        await tx.tournamentStage.update({
-          where: { id: nextStage.id },
-          data: { status: 'IN_PROGRESS' },
-        })
+          await tx.tournamentStage.update({
+            where: { id: nextStage.id },
+            data: { status: 'IN_PROGRESS' },
+          })
 
-        // Create tables for next stage
-        for (let tableIndex = 0; tableIndex < nextDesc.tableCount; tableIndex++) {
-          const tablePlayers = shuffled.slice(
-            tableIndex * nextDesc.playersPerTable,
-            (tableIndex + 1) * nextDesc.playersPerTable,
-          )
-          await tx.tournamentTable.create({
-            data: {
-              stageId: nextStage.id,
-              tableNumber: tableIndex + 1,
-              status: 'PENDING',
-              players: {
-                create: tablePlayers.map(pid => ({ playerId: pid, isBye: false })),
+          // Create tables for next stage
+          for (let tableIndex = 0; tableIndex < nextDesc.tableCount; tableIndex++) {
+            const tablePlayers = shuffled.slice(
+              tableIndex * nextDesc.playersPerTable,
+              (tableIndex + 1) * nextDesc.playersPerTable,
+            )
+            await tx.tournamentTable.create({
+              data: {
+                stageId: nextStage.id,
+                tableNumber: tableIndex + 1,
+                status: 'PENDING',
+                players: {
+                  create: tablePlayers.map(pid => ({ playerId: pid, isBye: false })),
+                },
+              },
+            })
+          }
+
+          return tx.tournament.findFirst({
+            where: { id },
+            include: {
+              stages: {
+                orderBy: { stageNumber: 'asc' },
+                include: { tables: { include: { players: true } } },
               },
             },
           })
-        }
-
-        return tx.tournament.findFirst({
-          where: { id },
-          include: {
-            stages: {
-              orderBy: { stageNumber: 'asc' },
-              include: { tables: { include: { players: true } } },
-            },
-          },
         })
-      })
+      } catch (err: unknown) {
+        if (err instanceof Error && err.message === 'Next stage not found') {
+          return reply.status(400).send({ error: 'Next stage not found' })
+        }
+        throw err
+      }
 
       return reply.send(tournament)
     },
