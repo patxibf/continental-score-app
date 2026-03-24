@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { renderWithProviders } from '@/test/wrapper'
 import TournamentNew from '../TournamentNew'
 
@@ -81,5 +81,72 @@ describe('TournamentNew wizard', () => {
     expect(await screen.findByText('4 players each')).toBeInTheDocument()
     expect(await screen.findByText(/2 advance/i)).toBeInTheDocument()
     expect(await screen.findByText('Final')).toBeInTheDocument()
+  })
+})
+
+// Helper: advance wizard to step 3 with a 2-stage bracket
+async function advanceToStep3() {
+  vi.mocked(getTournamentPreview).mockResolvedValue({
+    stages: [
+      { stageNumber: 1, tableCount: 3, playersPerTable: 4, advancePerTable: 2 },
+      { stageNumber: 2, tableCount: 1, playersPerTable: 6, advancePerTable: 0 },
+    ]
+  })
+  vi.mocked(api.post).mockResolvedValue({ id: 't1', name: 'Test', status: 'PENDING', stages: [] })
+  renderWithProviders(<TournamentNew />, { initialEntries: ['/tournaments/new'] })
+  fireEvent.change(await screen.findByPlaceholderText(/tournament name/i), { target: { value: 'Test' } })
+  fireEvent.click(await screen.findByText('Andres'))
+  fireEvent.click(await screen.findByText('Sofia'))
+  fireEvent.click(await screen.findByText('Mikel'))
+  fireEvent.click(screen.getByRole('button', { name: /next/i }))
+  fireEvent.click(await screen.findByRole('button', { name: /next/i })) // step 2 → 3
+}
+
+describe('TournamentNew wizard — steps 3 & 4', () => {
+  it('renders R1–R7 toggle buttons for each stage on step 3', async () => {
+    await advanceToStep3()
+    const r5Buttons = await screen.findAllByRole('button', { name: 'R5' })
+    expect(r5Buttons).toHaveLength(2) // one per stage
+  })
+
+  it('defaults non-final stages to R5–R7 and final to R1–R7', async () => {
+    await advanceToStep3()
+    expect(await screen.findByText('Rounds 5–7')).toBeInTheDocument()
+    expect(await screen.findByText('Rounds 1–7')).toBeInTheDocument()
+  })
+
+  it('extends startRound when clicking a round before current start', async () => {
+    await advanceToStep3()
+    const r3Buttons = await screen.findAllByRole('button', { name: 'R3' })
+    fireEvent.click(r3Buttons[0]) // first stage
+    expect(await screen.findByText('Rounds 3–7')).toBeInTheDocument()
+  })
+
+  it('shows tournament name and bracket summary on step 4', async () => {
+    await advanceToStep3()
+    fireEvent.click(await screen.findByRole('button', { name: /next/i })) // step 3 → 4
+    expect(await screen.findByText('Test')).toBeInTheDocument()
+    expect(await screen.findByText(/round 1/i)).toBeInTheDocument()
+    expect(await screen.findByText(/final/i)).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /start tournament/i })).toBeInTheDocument()
+  })
+
+  it('calls createTournament with correct payload', async () => {
+    await advanceToStep3()
+    fireEvent.click(await screen.findByRole('button', { name: /next/i })) // step 3 → 4
+    fireEvent.click(await screen.findByRole('button', { name: /start tournament/i }))
+    await waitFor(() => {
+      expect(api.post).toHaveBeenCalledWith(
+        expect.stringContaining('/tournaments'),
+        expect.objectContaining({
+          name: 'Test',
+          playerIds: expect.arrayContaining(['p1', 'p2', 'p3']),
+          stageConfigs: expect.arrayContaining([
+            expect.objectContaining({ startRound: 5, endRound: 7 }),
+            expect.objectContaining({ startRound: 1, endRound: 7 }),
+          ])
+        })
+      )
+    })
   })
 })
