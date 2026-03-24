@@ -226,7 +226,7 @@ model TournamentTable {
   stage       TournamentStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
   tableNumber Int
   gameId      String?         @unique
-  game        Game?           @relation(fields: [gameId], references: [id])
+  game        Game?           @relation(fields: [gameId], references: [id], onDelete: Restrict)
   status      TableStatus     @default(PENDING)
 
   players TournamentTablePlayer[]
@@ -243,6 +243,8 @@ model TournamentTablePlayer {
   isBye    Boolean         @default(false)
   advanced Boolean         @default(false)
 
+  // The algorithm assigns at most one bye slot per table, so (tableId, NULL) appears at most once.
+  // PostgreSQL treats NULLs as distinct in unique indexes, which is the correct behaviour here.
   @@unique([tableId, playerId])
 }
 

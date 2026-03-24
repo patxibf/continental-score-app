@@ -66,6 +66,7 @@ export const prisma = {
     update: vi.fn(),
   },
   tournamentParticipant: {
+    findMany: vi.fn(),
     createMany: vi.fn(),
   },
   tournamentStage: {
