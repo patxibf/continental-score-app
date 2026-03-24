@@ -284,6 +284,11 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
       const nextBracket = computeBracket(advancing.length)
       const nextDesc = nextBracket[0]
       const shuffled = [...advancing].sort(() => Math.random() - 0.5)
+      const totalSlots = nextDesc.tableCount * nextDesc.playersPerTable
+      const paddedAdvancing: (string | null)[] = [
+        ...shuffled,
+        ...Array(totalSlots - shuffled.length).fill(null), // bye slots
+      ]
 
       let tournament
       try {
@@ -309,7 +314,7 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
 
           // Create tables for next stage
           for (let tableIndex = 0; tableIndex < nextDesc.tableCount; tableIndex++) {
-            const tablePlayers = shuffled.slice(
+            const tablePlayers = paddedAdvancing.slice(
               tableIndex * nextDesc.playersPerTable,
               (tableIndex + 1) * nextDesc.playersPerTable,
             )
@@ -319,7 +324,7 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
                 tableNumber: tableIndex + 1,
                 status: 'PENDING',
                 players: {
-                  create: tablePlayers.map(pid => ({ playerId: pid, isBye: false })),
+                  create: tablePlayers.map(pid => ({ isBye: pid === null, playerId: pid ?? undefined })),
                 },
               },
             })

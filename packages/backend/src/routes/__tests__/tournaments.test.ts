@@ -325,4 +325,96 @@ describe('POST /api/tournaments/:id/stages/:stageId/advance', () => {
 
     expect(res.statusCode).toBe(400)
   })
+
+  it('inserts bye slots when tie inflation causes an odd advancing count', async () => {
+    // 2 tables, advancePerTable=3, but table-2 has a 3-way tie at rank 3 → 4 advance from table-2
+    // Total advancing = 3 + 4 = 7, computeBracket(7) returns tableCount:2, playersPerTable:4, byeCount:1
+    const token = groupToken(app)
+
+    const stageWithTie = {
+      id: 'stage-1',
+      tournamentId: 't-1',
+      stageNumber: 1,
+      startRound: 5,
+      endRound: 7,
+      advancePerTable: 3,
+      status: 'IN_PROGRESS',
+      tables: [
+        {
+          id: 'table-1',
+          stageId: 'stage-1',
+          tableNumber: 1,
+          status: 'COMPLETED',
+          gameId: 'game-1',
+          game: {
+            rounds: [
+              { scores: [
+                { playerId: 'p1', points: 10 },
+                { playerId: 'p2', points: 20 },
+                { playerId: 'p3', points: 30 },
+                { playerId: 'p4', points: 40 },
+              ] },
+            ],
+          },
+          players: [
+            { playerId: 'p1', isBye: false, advanced: false },
+            { playerId: 'p2', isBye: false, advanced: false },
+            { playerId: 'p3', isBye: false, advanced: false },
+            { playerId: 'p4', isBye: false, advanced: false },
+          ],
+        },
+        {
+          id: 'table-2',
+          stageId: 'stage-1',
+          tableNumber: 2,
+          status: 'COMPLETED',
+          gameId: 'game-2',
+          game: {
+            rounds: [
+              { scores: [
+                { playerId: 'p5', points: 10 },
+                { playerId: 'p6', points: 20 },
+                // p7 and p8 tie at rank 3 — both advance due to tie at the boundary
+                { playerId: 'p7', points: 30 },
+                { playerId: 'p8', points: 30 },
+                { playerId: 'p9', points: 40 },
+              ] },
+            ],
+          },
+          players: [
+            { playerId: 'p5', isBye: false, advanced: false },
+            { playerId: 'p6', isBye: false, advanced: false },
+            { playerId: 'p7', isBye: false, advanced: false },
+            { playerId: 'p8', isBye: false, advanced: false },
+            { playerId: 'p9', isBye: false, advanced: false },
+          ],
+        },
+      ],
+      tournament: { id: 't-1', groupId: 'group-1', stages: [{ stageNumber: 1 }, { stageNumber: 2 }] },
+    }
+
+    mockPrisma.tournamentStage.findFirst
+      .mockResolvedValueOnce(stageWithTie)
+      .mockResolvedValueOnce({ id: 'stage-2' })
+    mockPrisma.$transaction.mockImplementation((cb: any) => cb(mockPrisma))
+    mockPrisma.tournamentTablePlayer.updateMany.mockResolvedValue({})
+    mockPrisma.tournamentStage.update.mockResolvedValue({})
+    mockPrisma.tournamentTable.create.mockResolvedValue({})
+    mockPrisma.tournament.findFirst.mockResolvedValue({ id: 't-1', stages: [] })
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/tournaments/t-1/stages/stage-1/advance',
+      headers: { cookie: `token=${token}` },
+    })
+
+    expect(res.statusCode).toBe(200)
+    // computeBracket(7) → tableCount:2, playersPerTable:4, byeCount:1
+    // so two tables must be created, each with 4 player records (one slot is a bye)
+    expect(mockPrisma.tournamentTable.create).toHaveBeenCalledTimes(2)
+    const allCalls = mockPrisma.tournamentTable.create.mock.calls as any[]
+    const allPlayers = allCalls.flatMap((call: any) => call[0].data.players.create)
+    expect(allPlayers).toHaveLength(8) // 4 slots × 2 tables
+    expect(allPlayers.filter((p: any) => p.isBye === true)).toHaveLength(1)
+  })
 })
