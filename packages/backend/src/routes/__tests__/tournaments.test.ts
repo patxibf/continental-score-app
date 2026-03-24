@@ -1,20 +1,29 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { buildApp } from '../../test/helpers.js'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { buildApp, groupToken, memberToken } from '../../test/helpers.js'
 import { prisma } from '../../lib/prisma.js'
+import type { FastifyInstance } from 'fastify'
 
 vi.mock('../../lib/prisma.js')
 
 const mockPrisma = prisma as any
 
 describe('GET /api/tournaments/preview', () => {
-  it('returns bracket structure for valid player count', async () => {
-    const app = await buildApp()
-    const token = (await import('../../test/helpers.js')).groupToken(app)
+  let app: FastifyInstance
 
+  beforeEach(async () => {
+    app = await buildApp()
+    vi.resetAllMocks()
+  })
+
+  afterEach(async () => {
+    await app?.close()
+  })
+
+  it('returns bracket structure for valid player count', async () => {
     const res = await app.inject({
       method: 'GET',
       url: '/api/tournaments/preview?playerCount=12',
-      headers: { cookie: `token=${token}` },
+      headers: { cookie: `token=${groupToken(app)}` },
     })
 
     expect(res.statusCode).toBe(200)
@@ -25,34 +34,34 @@ describe('GET /api/tournaments/preview', () => {
   })
 
   it('returns 400 for player count below 3', async () => {
-    const app = await buildApp()
-    const token = (await import('../../test/helpers.js')).groupToken(app)
-
     const res = await app.inject({
       method: 'GET',
       url: '/api/tournaments/preview?playerCount=2',
-      headers: { cookie: `token=${token}` },
+      headers: { cookie: `token=${groupToken(app)}` },
     })
 
     expect(res.statusCode).toBe(400)
   })
 
   it('returns 401 without auth', async () => {
-    const app = await buildApp()
     const res = await app.inject({ method: 'GET', url: '/api/tournaments/preview?playerCount=12' })
     expect(res.statusCode).toBe(401)
   })
 })
 
 describe('POST /api/tournaments', () => {
-  beforeEach(() => {
+  let app: FastifyInstance
+
+  beforeEach(async () => {
+    app = await buildApp()
     vi.resetAllMocks()
   })
 
-  it('creates tournament and returns full structure', async () => {
-    const app = await buildApp()
-    const token = (await import('../../test/helpers.js')).groupToken(app)
+  afterEach(async () => {
+    await app?.close()
+  })
 
+  it('creates tournament and returns full structure', async () => {
     // 8 players → 2 tables of 4 → final of 4
     const playerIds = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8']
 
@@ -68,12 +77,18 @@ describe('POST /api/tournaments', () => {
       stages: [],
       participants: [],
     }
-    mockPrisma.$transaction.mockResolvedValue(mockTournament)
+    // Execute the callback with mocked prisma so transaction logic runs
+    mockPrisma.$transaction.mockImplementation((cb: any) => cb(mockPrisma))
+    // Set up the individual prisma method mocks that the transaction uses:
+    mockPrisma.tournament.create.mockResolvedValue({ id: 't-1', groupId: 'group-1' })
+    mockPrisma.tournamentStage.create.mockResolvedValue({ id: 'stage-1' })
+    mockPrisma.tournamentTable.create.mockResolvedValue({ id: 'table-1' })
+    mockPrisma.tournament.findFirst.mockResolvedValue(mockTournament)
 
     const res = await app.inject({
       method: 'POST',
       url: '/api/tournaments',
-      headers: { cookie: `token=${token}`, 'content-type': 'application/json' },
+      headers: { cookie: `token=${groupToken(app)}`, 'content-type': 'application/json' },
       payload: JSON.stringify({
         name: 'Test Cup',
         playerIds,
@@ -88,9 +103,6 @@ describe('POST /api/tournaments', () => {
   })
 
   it('returns 400 if stageConfigs length mismatches bracket', async () => {
-    const app = await buildApp()
-    const token = (await import('../../test/helpers.js')).groupToken(app)
-
     const playerIds = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6', 'p7', 'p8']
     mockPrisma.player.findMany.mockResolvedValue(
       playerIds.map(id => ({ id, groupId: 'group-1' })),
@@ -99,7 +111,7 @@ describe('POST /api/tournaments', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/api/tournaments',
-      headers: { cookie: `token=${token}`, 'content-type': 'application/json' },
+      headers: { cookie: `token=${groupToken(app)}`, 'content-type': 'application/json' },
       payload: JSON.stringify({
         name: 'Test Cup',
         playerIds,
@@ -111,13 +123,10 @@ describe('POST /api/tournaments', () => {
   })
 
   it('returns 403 for non-admin member', async () => {
-    const app = await buildApp()
-    const token = (await import('../../test/helpers.js')).memberToken(app)
-
     const res = await app.inject({
       method: 'POST',
       url: '/api/tournaments',
-      headers: { cookie: `token=${token}`, 'content-type': 'application/json' },
+      headers: { cookie: `token=${memberToken(app)}`, 'content-type': 'application/json' },
       payload: JSON.stringify({ name: 'x', playerIds: [], stageConfigs: [] }),
     })
 

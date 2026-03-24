@@ -52,7 +52,7 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
         where: { groupId, id: { in: playerIds }, active: true, userId: { not: null } },
       })
       if (players.length !== playerIds.length) {
-        return reply.status(400).send({ error: 'One or more players not found in group' })
+        return reply.status(400).send({ error: 'One or more playerIds not found in this group, or duplicates were provided' })
       }
 
       // Compute bracket and validate stageConfigs length
@@ -66,7 +66,7 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
       // Build tournament + stage 1 tables in a transaction
       const tournament = await prisma.$transaction(async (tx) => {
         // Create tournament
-        const t = await tx.tournament.create({
+        const createdTournament = await tx.tournament.create({
           data: {
             groupId,
             name,
@@ -87,7 +87,7 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
 
           const stage = await tx.tournamentStage.create({
             data: {
-              tournamentId: t.id,
+              tournamentId: createdTournament.id,
               stageNumber: desc.stageNumber,
               startRound: config.startRound,
               endRound: config.endRound,
@@ -100,7 +100,7 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
             // Pad with byes if needed
             const totalSlots = desc.tableCount * desc.playersPerTable
             const paddedPlayers: (string | null)[] = [
-              ...shuffledPlayers.slice(0, playerIds.length),
+              ...shuffledPlayers,
               ...Array(totalSlots - playerIds.length).fill(null), // bye slots
             ]
 
@@ -128,7 +128,7 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
         }
 
         return tx.tournament.findFirst({
-          where: { id: t.id },
+          where: { id: createdTournament.id },
           include: {
             participants: true,
             stages: {
