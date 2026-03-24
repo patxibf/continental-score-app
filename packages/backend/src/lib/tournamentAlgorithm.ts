@@ -27,6 +27,8 @@ function findSplit(players: number): { tableCount: number; playersPerTable: numb
  * Returns { padded, byeCount }.
  */
 function padToValid(players: number): { padded: number; byeCount: number } {
+  // Within any 10 consecutive integers there is always a multiple of 3, 4, or 5 (LCM of preferred sizes).
+  // So extra ≤ 10 is always sufficient to find a valid split.
   for (let extra = 1; extra <= 10; extra++) {
     if (findSplit(players + extra)) {
       return { padded: players + extra, byeCount: extra }
@@ -69,12 +71,16 @@ export function computeBracket(playerCount: number): StageDescriptor[] {
     let advance = 0
     for (const candidate of [2, 3, 1]) {
       const nextPool = split.tableCount * candidate
+      // Accept candidate if: next pool fits in one table (≤6), OR it has an exact split,
+      // OR it needs at most 3 bye slots (small enough to not distort the bracket).
+      // byeCount ≤ 3 is the threshold: within a 10-player window there's always a multiple of 3, 4, or 5.
       if (nextPool <= 6 || findSplit(nextPool) || padToValid(nextPool).byeCount <= 3) {
         advance = candidate
         break
       }
     }
-    if (advance === 0) advance = 2 // fallback
+    // This should be unreachable: candidate=1 always finds a valid nextPool (≥2 players fits in a single table)
+    if (advance === 0) throw new Error(`Could not determine advancePerTable for pool size ${current}`)
 
     stages.push({
       stageNumber,

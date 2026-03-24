@@ -23,6 +23,25 @@ describe('computeBracket', () => {
     expect(stages[1].playersPerTable).toBe(6)
   })
 
+  it('7 players → 2 stages (2 tables, then final of 4 or 6)', () => {
+    const stages = computeBracket(7)
+    expect(stages).toHaveLength(2)
+    expect(stages[0].tableCount).toBeGreaterThanOrEqual(2)
+    expect(stages[0].advancePerTable).toBeGreaterThan(0)
+    expect(stages[1].tableCount).toBe(1)
+    expect(stages[1].advancePerTable).toBe(0)
+    expect(stages[1].stageNumber).toBe(2)
+  })
+
+  it('stageNumbers are sequential starting from 1', () => {
+    for (const n of [3, 6, 7, 12, 20]) {
+      const stages = computeBracket(n)
+      stages.forEach((s, i) => {
+        expect(s.stageNumber, `n=${n}, stage index ${i}`).toBe(i + 1)
+      })
+    }
+  })
+
   it('20 players → produces valid multi-stage bracket ending in single table', () => {
     const stages = computeBracket(20)
     // Just verify the final stage is a single table within [3,6]
