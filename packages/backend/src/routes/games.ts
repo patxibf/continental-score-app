@@ -7,6 +7,45 @@ const createGameSchema = z.object({
   playerIds: z.array(z.string()).min(2).max(8),
 })
 
+async function onGameClosed(gameId: string) {
+  const table = await prisma.tournamentTable.findFirst({
+    where: { gameId },
+    include: {
+      stage: {
+        include: {
+          tables: { select: { id: true, status: true } },
+        },
+      },
+    },
+  })
+  if (!table) return // not a tournament game
+
+  await prisma.tournamentTable.update({
+    where: { id: table.id },
+    data: { status: 'COMPLETED' },
+  })
+
+  // Check if all tables in the stage are now complete
+  const allDone = table.stage.tables.every(
+    (t: { id: string; status: string }) => t.id === table.id || t.status === 'COMPLETED',
+  )
+  if (!allDone) return
+
+  // Mark stage complete
+  await prisma.tournamentStage.update({
+    where: { id: table.stage.id },
+    data: { status: 'COMPLETED' },
+  })
+
+  // If this is the final stage (advancePerTable = 0), mark tournament complete
+  if (table.stage.advancePerTable === 0) {
+    await prisma.tournament.update({
+      where: { id: table.stage.tournamentId },
+      data: { status: 'COMPLETED' },
+    })
+  }
+}
+
 const gameRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.get(
     '/api/seasons/:seasonId/games',
@@ -172,6 +211,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
             where: { id },
             data: { status: 'CLOSED', closedAt: new Date() },
           })
+          await onGameClosed(id)
           return reply.status(200).send(closed)
         }
 
@@ -199,6 +239,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
         })
 
         const result = await prisma.$transaction([...potUpdates, closeUpdate])
+        await onGameClosed(id)
         return reply.status(200).send(result[result.length - 1])
       }
 
@@ -208,6 +249,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
         data: { status: 'CLOSED', closedAt: new Date() },
       })
 
+      await onGameClosed(id)
       return reply.send(updated)
     },
   )

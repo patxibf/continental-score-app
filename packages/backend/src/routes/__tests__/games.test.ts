@@ -314,6 +314,59 @@ describe('POST /api/games/:id/close — pot settlement', () => {
   })
 })
 
+describe('POST /api/games/:id/close — tournament table', () => {
+  it('marks tournament table COMPLETED when game closes', async () => {
+    const token = groupToken(app)
+
+    // Tournament game: groupId set, seasonId null
+    vi.mocked(prisma.game.findFirst).mockResolvedValueOnce({
+      id: 'game-1',
+      groupId: 'group-1',
+      seasonId: null,
+      season: null,
+      status: 'IN_PROGRESS',
+      startRound: 5,
+      endRound: 7,
+      totalPot: null,
+      rounds: [
+        { scores: [] },
+        { scores: [] },
+        { scores: [] }, // 3 rounds (5,6,7) = required
+      ],
+      players: [],
+    } as any)
+    vi.mocked(prisma.tournamentTable.findFirst).mockResolvedValueOnce({
+      id: 'table-1',
+      stageId: 'stage-1',
+      stage: {
+        id: 'stage-1',
+        advancePerTable: 0, // final stage
+        tournamentId: 't-1',
+        tables: [{ id: 'table-1', status: 'IN_PROGRESS' }],
+      },
+    } as any)
+    vi.mocked(prisma.game.update).mockResolvedValueOnce({ id: 'game-1', status: 'CLOSED' } as any)
+    vi.mocked(prisma.tournamentTable.update).mockResolvedValueOnce({} as any)
+    vi.mocked(prisma.tournamentStage.update).mockResolvedValueOnce({} as any)
+    vi.mocked(prisma.tournament.update).mockResolvedValueOnce({} as any)
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/games/game-1/close',
+      headers: { cookie: `token=${token}`, 'content-type': 'application/json' },
+      payload: JSON.stringify({ confirm: true }),
+    })
+
+    expect(res.statusCode).toBe(200)
+    expect(vi.mocked(prisma.tournamentTable.update)).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: 'COMPLETED' } }),
+    )
+    expect(vi.mocked(prisma.tournament.update)).toHaveBeenCalledWith(
+      expect.objectContaining({ data: { status: 'COMPLETED' } }),
+    )
+  })
+})
+
 describe('POST /api/seasons/:seasonId/games — totalPot', () => {
   it('sets totalPot when season has pot enabled (3 players at £5)', async () => {
     vi.mocked(prisma.season.findFirst).mockResolvedValueOnce({
