@@ -59,6 +59,33 @@ export const prisma = {
     create: vi.fn(),
     update: vi.fn(),
   },
+  tournament: {
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+  },
+  tournamentParticipant: {
+    createMany: vi.fn(),
+  },
+  tournamentStage: {
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+  },
+  tournamentTable: {
+    findFirst: vi.fn(),
+    findMany: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    updateMany: vi.fn(),
+  },
+  tournamentTablePlayer: {
+    findMany: vi.fn(),
+    createMany: vi.fn(),
+    updateMany: vi.fn(),
+  },
   $transaction: vi.fn((ops: any) =>
     Array.isArray(ops) ? Promise.all(ops) : ops(prisma),
   ),

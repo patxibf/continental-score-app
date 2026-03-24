@@ -86,6 +86,8 @@ model Player {
   gamePlayers GamePlayer[]
   roundScores RoundScore[]
   telegramUsers TelegramUser[]
+  tournamentParticipants TournamentParticipant[]
+  tournamentTablePlayers TournamentTablePlayer[]
 
   @@unique([groupId, userId])
 }
@@ -162,6 +164,86 @@ model RoundScore {
   wentOut  Boolean @default(false)
 
   @@unique([roundId, playerId])
+}
+
+enum TournamentStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum StageStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum TableStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Tournament {
+  id        String           @id @default(uuid())
+  groupId   String
+  group     Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  name      String
+  status    TournamentStatus @default(IN_PROGRESS)
+  createdAt DateTime         @default(now())
+
+  participants TournamentParticipant[]
+  stages       TournamentStage[]
+}
+
+model TournamentParticipant {
+  id           String     @id @default(uuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  playerId     String
+  player       Player     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, playerId])
+}
+
+model TournamentStage {
+  id              String        @id @default(uuid())
+  tournamentId    String
+  tournament      Tournament    @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  stageNumber     Int
+  startRound      Int
+  endRound        Int
+  advancePerTable Int
+  status          StageStatus   @default(PENDING)
+
+  tables TournamentTable[]
+
+  @@unique([tournamentId, stageNumber])
+}
+
+model TournamentTable {
+  id          String          @id @default(uuid())
+  stageId     String
+  stage       TournamentStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  tableNumber Int
+  gameId      String?         @unique
+  game        Game?           @relation(fields: [gameId], references: [id])
+  status      TableStatus     @default(PENDING)
+
+  players TournamentTablePlayer[]
+
+  @@unique([stageId, tableNumber])
+}
+
+model TournamentTablePlayer {
+  id       String          @id @default(uuid())
+  tableId  String
+  table    TournamentTable @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  playerId String?
+  player   Player?         @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  isBye    Boolean         @default(false)
+  advanced Boolean         @default(false)
+
+  @@unique([tableId, playerId])
 }
 
 model TelegramChat {
