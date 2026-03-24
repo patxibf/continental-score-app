@@ -249,6 +249,8 @@ describe('DELETE /api/rounds/:id', () => {
       id: 'r2',
       game: {
         status: 'IN_PROGRESS',
+        groupId: null,
+        season: { groupId: 'group-1' },
         rounds: [{ id: 'r2', roundNumber: 2 }],
       },
     } as any)
@@ -268,6 +270,8 @@ describe('DELETE /api/rounds/:id', () => {
       id: 'r1',
       game: {
         status: 'IN_PROGRESS',
+        groupId: null,
+        season: { groupId: 'group-1' },
         rounds: [{ id: 'r2', roundNumber: 2 }],
       },
     } as any)
@@ -287,6 +291,8 @@ describe('DELETE /api/rounds/:id', () => {
       id: 'r1',
       game: {
         status: 'CLOSED',
+        groupId: null,
+        season: { groupId: 'group-1' },
         rounds: [{ id: 'r1', roundNumber: 7 }],
       },
     } as any)

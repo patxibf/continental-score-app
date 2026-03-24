@@ -64,6 +64,8 @@ model Group {
   players       Player[]
   seasons       Season[]
   telegramChats TelegramChat[]
+  games         Game[]
+  tournaments   Tournament[]
 }
 
 model Player {
@@ -108,16 +110,21 @@ enum SeasonStatus {
 }
 
 model Game {
-  id        String     @id @default(uuid())
-  seasonId  String
-  season    Season     @relation(fields: [seasonId], references: [id], onDelete: Cascade)
-  status    GameStatus @default(IN_PROGRESS)
-  createdAt DateTime   @default(now())
-  closedAt  DateTime?
-  totalPot  Decimal?   @db.Decimal(10, 2)
+  id         String     @id @default(uuid())
+  seasonId   String?
+  season     Season?    @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  groupId    String?
+  group      Group?     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  status     GameStatus @default(IN_PROGRESS)
+  createdAt  DateTime   @default(now())
+  closedAt   DateTime?
+  totalPot   Decimal?   @db.Decimal(10, 2)
+  startRound Int?
+  endRound   Int?
 
-  players GamePlayer[]
-  rounds  Round[]
+  players        GamePlayer[]
+  rounds         Round[]
+  tournamentTable TournamentTable?
 }
 
 enum GameStatus {

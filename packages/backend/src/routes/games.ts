@@ -8,6 +8,17 @@ const createGameSchema = z.object({
 })
 
 const gameRoutes: FastifyPluginAsync = async (fastify) => {
+  // Helper: find a game that belongs to this group, whether via season or direct groupId
+  function whereGameForGroup(id: string, groupId: string) {
+    return {
+      id,
+      OR: [
+        { season: { groupId } },
+        { groupId },
+      ],
+    } as const
+  }
+
   fastify.get(
     '/api/seasons/:seasonId/games',
     { preHandler: [fastify.requireGroup] },
@@ -90,7 +101,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params as { id: string }
 
       const game = await prisma.game.findFirst({
-        where: { id, season: { groupId } },
+        where: whereGameForGroup(id, groupId),
         include: {
           season: { select: { id: true, name: true, groupId: true } },
           players: { include: { player: true } },
@@ -132,7 +143,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const game = await prisma.game.findFirst({
-        where: { id, season: { groupId } },
+        where: whereGameForGroup(id, groupId),
         include: {
           rounds: { include: { scores: true } },
           players: { include: { player: true } },
@@ -146,9 +157,10 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
       if (game.status === 'CLOSED') {
         return reply.status(400).send({ error: 'Game already closed' })
       }
-      if (game.rounds.length < TOTAL_ROUNDS) {
+      const requiredRounds = (game.endRound ?? 7) - (game.startRound ?? 1) + 1
+      if (game.rounds.length < requiredRounds) {
         return reply.status(400).send({
-          error: `Cannot close game: all ${TOTAL_ROUNDS} rounds must be completed first`,
+          error: `Cannot close game: all ${requiredRounds} rounds must be completed first`,
         })
       }
 
@@ -218,7 +230,7 @@ const gameRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params as { id: string }
 
       const game = await prisma.game.findFirst({
-        where: { id, season: { groupId } },
+        where: whereGameForGroup(id, groupId),
       })
 
       if (!game) {

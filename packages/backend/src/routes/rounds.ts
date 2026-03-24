@@ -16,6 +16,17 @@ const submitRoundSchema = z.object({
 })
 
 const roundRoutes: FastifyPluginAsync = async (fastify) => {
+  // Helper: find a game that belongs to this group, whether via season or direct groupId
+  function whereGameForGroup(id: string, groupId: string) {
+    return {
+      id,
+      OR: [
+        { season: { groupId } },
+        { groupId },
+      ],
+    } as const
+  }
+
   fastify.get(
     '/api/games/:gameId/rounds',
     { preHandler: [fastify.requireGroup] },
@@ -24,7 +35,7 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
       const { gameId } = request.params as { gameId: string }
 
       const game = await prisma.game.findFirst({
-        where: { id: gameId, season: { groupId } },
+        where: whereGameForGroup(gameId, groupId),
       })
       if (!game) {
         return reply.status(404).send({ error: 'Game not found' })
@@ -56,7 +67,7 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const game = await prisma.game.findFirst({
-        where: { id: gameId, season: { groupId } },
+        where: whereGameForGroup(gameId, groupId),
         include: { players: true, rounds: true },
       })
       if (!game) {
@@ -67,6 +78,14 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
       }
 
       const { roundNumber, scores } = body.data
+
+      const start = game.startRound ?? 1
+      const end = game.endRound ?? TOTAL_ROUNDS
+      if (roundNumber < start || roundNumber > end) {
+        return reply.status(400).send({
+          error: `Round ${roundNumber} is outside this game's range (${start}–${end})`,
+        })
+      }
 
       // Check round isn't already submitted
       const existingRound = game.rounds.find(r => r.roundNumber === roundNumber)
@@ -130,7 +149,8 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
         where: { id },
         include: { game: { include: { season: true } } },
       })
-      if (!round || round.game.season.groupId !== groupId) {
+      const gameGroupId = round?.game.groupId ?? round?.game.season?.groupId
+      if (!round || gameGroupId !== groupId) {
         return reply.status(404).send({ error: 'Round not found' })
       }
       if (round.game.status === 'CLOSED') {
@@ -175,17 +195,19 @@ const roundRoutes: FastifyPluginAsync = async (fastify) => {
       const { id } = request.params as { id: string }
 
       const round = await prisma.round.findFirst({
-        where: { id, game: { season: { groupId } } },
+        where: { id },
         include: {
           game: {
             include: {
+              season: true,
               rounds: { orderBy: { roundNumber: 'desc' }, take: 1 },
             },
           },
         },
       })
+      const deleteGameGroupId = round?.game.groupId ?? round?.game.season?.groupId
 
-      if (!round) return reply.status(404).send({ error: 'Round not found' })
+      if (!round || deleteGameGroupId !== groupId) return reply.status(404).send({ error: 'Round not found' })
       if (round.game.status === 'CLOSED') return reply.status(403).send({ error: 'Game is closed' })
       if (round.game.rounds[0].id !== id) {
         return reply.status(400).send({ error: 'Can only undo the last round' })
