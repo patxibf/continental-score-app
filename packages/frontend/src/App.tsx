@@ -21,6 +21,9 @@ import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import PickGroup from '@/pages/PickGroup'
 import Join from '@/pages/Join'
+import TournamentList from './pages/TournamentList'
+import TournamentNew from './pages/TournamentNew'
+import TournamentDetail from './pages/TournamentDetail'
 
 function AppRoot() {
   const { user, isLoading } = useAuth()
@@ -146,6 +149,36 @@ export default function App() {
           <ProtectedRoute>
             <Layout>
               <PlayerStats />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tournaments"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <TournamentList />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tournaments/new"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <TournamentNew />
+            </Layout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tournaments/:id"
+        element={
+          <ProtectedRoute>
+            <Layout>
+              <TournamentDetail />
             </Layout>
           </ProtectedRoute>
         }

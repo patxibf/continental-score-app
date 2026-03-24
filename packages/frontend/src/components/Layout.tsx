@@ -2,12 +2,13 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { Home, Users, Trophy, BarChart3, Settings, LogOut } from 'lucide-react'
+import { Home, Users, Trophy, Swords, BarChart3, Settings, LogOut } from 'lucide-react'
 
 const navItems = [
   { to: '/dashboard', label: 'Home', icon: Home },
   { to: '/players', label: 'Players', icon: Users },
   { to: '/seasons', label: 'Seasons', icon: Trophy },
+  { to: '/tournaments', label: 'Tournaments', icon: Swords },
   { to: '/stats', label: 'Stats', icon: BarChart3 },
 ]
 
