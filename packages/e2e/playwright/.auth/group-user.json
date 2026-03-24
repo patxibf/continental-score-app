@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoidXNlciIsInVzZXJJZCI6IjMxOWQ1NGQzLTk3OGEtNDc5Yy05YmRmLWU0MjVmOWJkNjBlZCIsInBsYXllcklkIjoiYzM5MzQ1M2UtMTNkZi00NTE4LThlNjEtYTNiMmFkNzBlMzkxIiwiZ3JvdXBJZCI6IjZhYjM4Mzk5LWRmNWUtNDFlOC1iOWM1LTk1NjQzYzA5ZjUwZSIsImdyb3VwUm9sZSI6Im93bmVyIiwiaWF0IjoxNzc0MzQ3MDIzfQ.LfKEwRUa4QQ_RMVOQ8IqzYtl3kwEKM6jt3DheJi2fds",
+      "domain": "d2f12kp396t6lu.cloudfront.net",
+      "path": "/",
+      "expires": 1774951823.21075,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}
